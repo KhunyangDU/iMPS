@@ -53,10 +53,12 @@ include("TempSrc/AbstractMPS.jl")
 include("TempSrc/AbstractMPO.jl")
 include("TempSrc/SymSpin.jl")
 include("TempSrc/canonicalize.jl")
-
-
 include("TempSrc/AbstractEnvironment.jl")
 include("TempSrc/push.jl")
+include("TempSrc/AbstractHamiltonian.jl")
+include("TempSrc/action.jl")
+include("TempSrc/contract.jl")
+include("TempSrc/Lanczos.jl")
 
 
 #= 

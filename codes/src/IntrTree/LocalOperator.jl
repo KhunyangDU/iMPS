@@ -60,7 +60,7 @@ function isequal(A::LocalOperator, B::LocalOperator)
 end
 
 function getIdTensor(Opr::AbstractLocalOperator)
-    space = domain(Opr.Opri)[1]
+    space = codomain(Opr.Opri)[1]
     return TensorMap(diagm(ones(dim(space))),space,space)
 end
 

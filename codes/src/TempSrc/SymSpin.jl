@@ -8,8 +8,8 @@ const PhySpace = Rep[SU₂](1//2 => 1)
 # S⋅S interaction
 const SS = let
     AuxSpace = Rep[SU₂](1 => 1)
-    OpL = TensorMap(ones, Float64, PhySpace, PhySpace ⊗ AuxSpace) * sqrt(3) / 2.
-    OpR = permute(OpL', ((1,2), (3,)))
+    OpL = TensorMap(ones, Float64, PhySpace, AuxSpace ⊗ PhySpace) * sqrt(3) / 2.
+    OpR = permute(OpL', ((2,1), (3,)))
     OpL, OpR
 end
 

@@ -2,19 +2,24 @@
 
 
 mutable struct SparseMPO <: AbstractMPO
-    Mats::Vector{Matrix{Union{Nothing,AbstractMPOTensor}}}
+    Mats::Vector{SparseMPOTensor}
     D::Vector{NTuple{2,Int64}}
     
-    function SparseMPO(Mats::Vector{Matrix{Union{Nothing,AbstractMPOTensor}}},
+    function SparseMPO(Mats::Vector{SparseMPOTensor},
         D::Vector{NTuple{2,Int64}})
         return new(Mats,D)
     end
 
-    function SparseMPO(Mats::Vector{Matrix{Union{Nothing,AbstractMPOTensor}}})
+    function SparseMPO(Mats::Vector{SparseMPOTensor})
         D = map(size,Mats)
         return new(Mats,convert(Vector{NTuple{2,Int64}},D))
     end
 
+    function SparseMPO(t::SparseMPOTensor{N,M}) where {N,M}
+        D = convert(Vector{NTuple{2,Int64}},[(N,M)])
+        Mats = convert(Vector{SparseMPOTensor},[t])
+        return new(Mats,D)        
+    end
 end
 
 
@@ -26,11 +31,11 @@ end
 
 function AutomataSparseMPO(Root::InteractionTreeNode,L::Int64=treeheight(Root) - 1)
     MPO = let 
-        tempMPO = Vector{Matrix{Union{Nothing,AbstractMPOTensor}}}(undef,L)
+        tempMPO = Vector{SparseMPOTensor}(undef,L)
 
         last_leaves = []
         last_roots = Root.children
-
+        #idtensor =isometry((codomain(last_roots[1].children[1].Opr.Opri)[1] |> x -> (x,x))...)
         idtensor = getIdTensor(last_roots[1].children[1].Opr)
         
         last_inverse_root = 0
@@ -61,13 +66,13 @@ function AutomataSparseMPO(Root::InteractionTreeNode,L::Int64=treeheight(Root) -
             end
 
             localMPOdims = length.((last_roots,next_roots)) .+ (last_inverse_root,next_inverse_root)
-            localMPO = Matrix{Union{Nothing,AbstractMPOTensor}}(nothing,localMPOdims...)
-            #localMPO .= MPOTensor(0*idtensor)
-            localMPO[1,1] = MPOTensor(last_inverse_root*idtensor)
+            localMPO = SparseMPOTensor(nothing,localMPOdims...)
+            #localMPO .= DenseMPOTensor(0*idtensor)
+            localMPO.m[1,1] = DenseMPOTensor(last_inverse_root*idtensor)
 
 
             for inds in leaves_inds
-                localMPO[inds[1:2]...] = MPOTensor(let 
+                localMPO.m[inds[1:2]...] = DenseMPOTensor(let 
                     localOpr = next_leaves[inds[3]].Opr.Opri
                     strength = next_leaves[inds[3]].Opr.strength
                     if isnan(strength)
@@ -79,7 +84,7 @@ function AutomataSparseMPO(Root::InteractionTreeNode,L::Int64=treeheight(Root) -
             end
 
             for inds in roots_inds
-                localMPO[inds[1:2]...] = MPOTensor(let 
+                localMPO.m[inds[1:2]...] = DenseMPOTensor(let 
                     localOpr = next_roots[inds[3]].Opr.Opri
                     strength = next_roots[inds[3]].Opr.strength
                     if isnan(strength)
