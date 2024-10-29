@@ -50,7 +50,6 @@ end
 
 """
 Generate rand MPS for initial state.
-
 """
 function randMPS(PhySpaces::Vector,AuxSpaces::Vector;type::Type = Float64)
     @assert (L = length(PhySpaces)) == length(AuxSpaces)

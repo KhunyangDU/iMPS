@@ -1,4 +1,4 @@
-function action(O::SparseProjectiveHamiltonian{N},obj::MPSTensor{R}) where {N,R}
+function action(O::SparseProjectiveHamiltonian{N},obj::AbstractMPSTensor{R}) where {N,R}
     if (N,R) == (1,3)
         return action1(O,obj)
     elseif (N,R) == (2,4) 
@@ -16,7 +16,7 @@ function action1(O::SparseProjectiveHamiltonian{1},obj::MPSTensor{3})
         tmp = nothing
         for j in 1:N
             isnothing(O.H.Mats[1].m[j,i]) && continue
-            if j == 1
+            if isnothing(tmp)
                 tmp = contract(O.EnvL.envt[j], obj, O.H.Mats[1].m[j,i])
             else 
                 tmp += contract(O.EnvL.envt[j], obj, O.H.Mats[1].m[j,i])
@@ -29,14 +29,14 @@ function action1(O::SparseProjectiveHamiltonian{1},obj::MPSTensor{3})
 end
 
 
-function action2(O::SparseProjectiveHamiltonian{2},obj::CompositeMPSTensor{4})
+function action2(O::SparseProjectiveHamiltonian{2},obj::CompositeMPSTensor{2,4})
     N,M = O.H.D[1]
 
     tmp1 = Vector{Any}(nothing,M)
 
     for i in 1:M, j in 1:N
         isnothing(O.H.Mats[1].m[j,i]) && continue
-        if j == 1
+        if isnothing(tmp1[i])
             tmp1[i] = contract(O.EnvL.envt[j], obj, O.H.Mats[1].m[j,i])
         else 
             tmp1[i] += contract(O.EnvL.envt[j], obj, O.H.Mats[1].m[j,i])

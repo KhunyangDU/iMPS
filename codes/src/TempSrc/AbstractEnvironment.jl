@@ -38,7 +38,9 @@ function Base.:+(A::RightEnvironmentTensor,
     B::RightEnvironmentTensor)
     return RightEnvironmentTensor(A.t + B.t)
 end
+"""
 
+"""
 mutable struct LeftCompositeEnvironmentTensor{N,R} <: AbstractEnvironmentTensor
     t::AbstractTensorMap
 
@@ -53,6 +55,16 @@ mutable struct RightCompositeEnvironmentTensor{N,R} <: AbstractEnvironmentTensor
     function RightCompositeEnvironmentTensor(t::AbstractTensorMap)
         return new{length(domain(t)),rank(t)}(t)
     end
+end
+
+function Base.:+(A::LeftCompositeEnvironmentTensor,
+    B::LeftCompositeEnvironmentTensor)
+    return LeftCompositeEnvironmentTensor(A.t + B.t)
+end
+
+function Base.:+(A::RightCompositeEnvironmentTensor,
+    B::RightCompositeEnvironmentTensor)
+    return RightCompositeEnvironmentTensor(A.t + B.t)
 end
 
 

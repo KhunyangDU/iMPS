@@ -39,7 +39,7 @@ end
 
 
 
-function TensorKit.tsvd(A::CompositeMPSTensor{R}; direction::Symbol=:center, kwargs...) where R
+function TensorKit.tsvd(A::CompositeMPSTensor{2, R}; direction::Symbol=:center, kwargs...) where {R}
     @assert direction in [:center,:left,:right]
     U,S,V,ϵ = tsvd(A.A,(1,2),tuple(3:R...);kwargs...)
     if direction == :center

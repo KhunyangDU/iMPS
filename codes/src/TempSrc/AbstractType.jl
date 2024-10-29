@@ -13,11 +13,10 @@ Wrapper type for MPS local tensors.
 
 Convention (' marks codomain): 
 
-          3 ... (R-1)
-          \\ | /  
-     1'--   A  ---R         1'-- A -- 2
-            | 
-            2'   
+    1' - A - R
+         | \
+         2' 3...R-1
+
 In particular, R == 2 for bond tensor.
 
 # Constructors
@@ -36,7 +35,20 @@ mutable struct MPSTensor{R} <: AbstractMPSTensor{R}
     end
 
 end
+"""
+Wrapper type for ajoint of MPS local tensors.
 
+Convention (' marks codomain): 
+
+    1 - A - R'
+        | \
+        2 3'...(R-1)'
+         
+In particular, R == 2 for bond tensor.
+
+# Constructors
+     MPSTensor(::AbstractTensorMap) 
+"""
 mutable struct AdjointMPSTensor{R} <: AbstractMPSTensor{R}
     Elements::AbstractTensorMap
 
@@ -97,17 +109,22 @@ end
 function TensorKit.norm(A::MPSTensor)
     return norm(A.Elements)
 end
-
-mutable struct CompositeMPSTensor{R} <: AbstractMPSTensor{R}
+"""
+todo {}
+    1' - A - R
+         | \
+         2' 3'...(R-1)'
+"""
+mutable struct CompositeMPSTensor{N, R} <: AbstractMPSTensor{R}
     A::AbstractTensorMap
 
     function CompositeMPSTensor(A::AbstractTensorMap)
-        return new{rank(A)}(A)
+        return new{length(codomain(A))-1, rank(A)}(A)
     end
 
-    function CompositeMPSTensor(fc::Function,codomain,domain)
-        A = TensorMap(fc,codomain,domain)
-        return new{rank(A)}(A)
+    function CompositeMPSTensor(fc::Function, codom, dom)
+        A = TensorMap(fc,codom,dom)
+        return new{length(codomain(A))-1, rank(A)}(A)
     end
 end
 
@@ -116,33 +133,65 @@ function composite(A::MPSTensor{3}, B::MPSTensor{3})
     return CompositeMPSTensor(tmp)
 end
 
-mutable struct AdjointCompositeMPSTensor{R} <: AbstractMPSTensor{R}
+mutable struct AdjointCompositeMPSTensor{N, R} <: AbstractMPSTensor{R}
     A::AbstractTensorMap
 
     function AdjointCompositeMPSTensor(A::AbstractTensorMap)
-        return new{rank(A)}(A)
+        return new{length(domain(A))-1, rank(A)}(A)
     end
 
-    function AdjointCompositeMPSTensor(fc::Function,codomain,domain)
-        A = TensorMap(fc,codomain,domain)
-        return new{rank(A)}(A)
+    function AdjointCompositeMPSTensor(fc::Function,codom,dom)
+        A = TensorMap(fc,codom,dom)
+        return new{length(domain(A))-1, rank(A)}(A)
     end
 end
 
 function Base.adjoint(t::CompositeMPSTensor)
-    return AdjointCompositeMPSTensor(t.A)
+    return AdjointCompositeMPSTensor(t.A')
 end
 
 function Base.adjoint(ts::Vector{CompositeMPSTensor})
-    return convert(Vector{AdjointCompositeMPSTensor},[AdjointCompositeMPSTensor(t.A) for t in ts])
+    return convert(Vector{AdjointCompositeMPSTensor},[AdjointCompositeMPSTensor(t.A') for t in ts])
 end
 
 function Base.adjoint(t::AdjointCompositeMPSTensor)
-    return CompositeMPSTensor(t.A)
+    return CompositeMPSTensor(t.A')
 end
 
 function Base.adjoint(ts::Vector{AdjointCompositeMPSTensor})
-    return convert(Vector{CompositeMPSTensor},[CompositeMPSTensor(t.A) for t in ts])
+    return convert(Vector{CompositeMPSTensor},[CompositeMPSTensor(t.A') for t in ts])
+end
+
+function Base.:*(A::CompositeMPSTensor{2, 4}, B::AdjointCompositeMPSTensor{2, 4})
+    return @tensor A.A[1,2,3,4] * B.A[4,1,2,3]
+end
+
+function Base.:+(A::CompositeMPSTensor{2, 4}, B::CompositeMPSTensor{2, 4})
+    return CompositeMPSTensor(A.A + B.A)
+end
+
+function Base.:-(A::CompositeMPSTensor{2, 4}, B::CompositeMPSTensor{2, 4})
+    return A + (-1)*B
+end
+
+function Base.:*(n::Number, A::CompositeMPSTensor)
+    return CompositeMPSTensor(n*A.A)
+end
+
+function Base.:/(A::CompositeMPSTensor, n::Number)
+    return (1/n) * A
+end
+
+function Base.iterate(t::AbstractMPSTensor)
+    return (t,nothing)
+end
+
+function Base.iterate(::AbstractMPSTensor,::Nothing)
+    return nothing
+end
+
+function TensorKit.norm(A::CompositeMPSTensor)
+    return norm(A.A)
 end
 
 abstract type AbstractMPOTensor end
