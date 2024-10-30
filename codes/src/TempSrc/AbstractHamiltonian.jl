@@ -13,7 +13,7 @@ mutable struct SparseProjectiveHamiltonian{N} <: AbstractProjectiveHamiltonian
     end
 end
 
-function project1(H::SparseMPO,env::Environment,site::Int64)
+function proj1(H::SparseMPO,env::Environment,site::Int64)
     return SparseProjectiveHamiltonian(env.envs[site:site+1]...,SparseMPO(H.Mats[site]))
 end
 

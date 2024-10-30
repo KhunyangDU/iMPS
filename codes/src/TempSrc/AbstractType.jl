@@ -23,7 +23,7 @@ In particular, R == 2 for bond tensor.
      MPSTensor(::AbstractTensorMap) 
 """
 mutable struct MPSTensor{R} <: AbstractMPSTensor{R}
-    Elements::AbstractTensorMap
+    A::AbstractTensorMap
 
     function MPSTensor(ts::AbstractTensorMap)
         return new{rank(ts)}(ts)
@@ -50,7 +50,7 @@ In particular, R == 2 for bond tensor.
      MPSTensor(::AbstractTensorMap) 
 """
 mutable struct AdjointMPSTensor{R} <: AbstractMPSTensor{R}
-    Elements::AbstractTensorMap
+    A::AbstractTensorMap
 
     function AdjointMPSTensor(ts::AbstractTensorMap)
         return new{rank(ts)}(ts)
@@ -64,32 +64,32 @@ mutable struct AdjointMPSTensor{R} <: AbstractMPSTensor{R}
 end
 
 function Base.adjoint(t::MPSTensor)
-    return AdjointMPSTensor(t.Elements')
+    return AdjointMPSTensor(t.A')
 end
 
 function Base.adjoint(ts::Vector{MPSTensor})
-    return convert(Vector{AdjointMPSTensor},[AdjointMPSTensor(t.Elements') for t in ts])
+    return convert(Vector{AdjointMPSTensor},[AdjointMPSTensor(t.A') for t in ts])
 end
 
 function Base.adjoint(t::AdjointMPSTensor)
-    return MPSTensor(t.Elements')
+    return MPSTensor(t.A')
 end
 
 function Base.adjoint(ts::Vector{AdjointMPSTensor})
-    return convert(Vector{MPSTensor},[MPSTensor(t.Elements') for t in ts])
+    return convert(Vector{MPSTensor},[MPSTensor(t.A') for t in ts])
 end
 
 
 function Base.:*(A::MPSTensor{3}, Ad::AdjointMPSTensor{3})
-    return @tensor A.Elements[1,2,3] * Ad.Elements[3,1,2]
+    return @tensor A.A[1,2,3] * Ad.A[3,1,2]
 end
 
 function Base.:*(n::Number, A::MPSTensor)
-    return MPSTensor(A.Elements*n)
+    return MPSTensor(A.A*n)
 end
 
 function Base.:*(n::Number, A::MPSTensor)
-    return MPSTensor(A.Elements*n)
+    return MPSTensor(A.A*n)
 end
 
 function Base.:/(A::MPSTensor, n::Number)
@@ -99,7 +99,7 @@ end
 
 function Base.:+(A::MPSTensor{R₁}, B::MPSTensor{R₂}) where {R₁,R₂}
     @assert R₁ == R₂
-    return MPSTensor(A.Elements + B.Elements)
+    return MPSTensor(A.A + B.A)
 end
 
 function Base.:-(A::MPSTensor{R₁}, B::MPSTensor{R₂}) where {R₁,R₂}
@@ -107,7 +107,7 @@ function Base.:-(A::MPSTensor{R₁}, B::MPSTensor{R₂}) where {R₁,R₂}
 end
 
 function TensorKit.norm(A::MPSTensor)
-    return norm(A.Elements)
+    return norm(A.A)
 end
 """
 todo {}
@@ -129,7 +129,7 @@ mutable struct CompositeMPSTensor{N, R} <: AbstractMPSTensor{R}
 end
 
 function composite(A::MPSTensor{3}, B::MPSTensor{3})
-    @tensor tmp[-1 -2 -3; -4] ≔ A.Elements[-1,-2,1]*B.Elements[1,-3,-4]
+    @tensor tmp[-1 -2 -3; -4] ≔ A.A[-1,-2,1]*B.A[1,-3,-4]
     return CompositeMPSTensor(tmp)
 end
 

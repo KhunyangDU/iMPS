@@ -9,7 +9,7 @@ end
 function action1(O::SparseProjectiveHamiltonian{1},obj::MPSTensor{3})
     N,M = O.H.D[1]
 
-    ref = obj.Elements * 0
+    ref = obj.A * 0
 
     #tmp = Vector{Any}(nothing,M)
     for i in 1:M

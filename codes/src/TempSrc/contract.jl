@@ -4,19 +4,19 @@ Contract the AbstractEnvironmentTensor with AbstractMPOTensor / AbstractEnvironm
 Especially for 1-site projective H action
 """
 function contract(El::LeftEnvironmentTensor{2},A::MPSTensor{3}, mpo::DenseMPOTensor{2})
-    @tensor tmp[-1 -2;-3] ≔ El.t[-1,1] * A.Elements[1,2,-3] * mpo.t[-2,2]
+    @tensor tmp[-1 -2;-3] ≔ El.t[-1,1] * A.A[1,2,-3] * mpo.t[-2,2]
     return LeftCompositeEnvironmentTensor(tmp)
 end
 function contract(El::LeftEnvironmentTensor{2},A::MPSTensor{3}, mpo::DenseMPOTensor{3})
-    @tensor tmp[-1 -2;-3 -4] ≔ El.t[-1,1] * A.Elements[1,2,-4] * mpo.t[-2,-3,2]
+    @tensor tmp[-1 -2;-3 -4] ≔ El.t[-1,1] * A.A[1,2,-4] * mpo.t[-2,-3,2]
     return LeftCompositeEnvironmentTensor(tmp)
 end
 function contract(El::LeftEnvironmentTensor{3},A::MPSTensor{3}, mpo::DenseMPOTensor{2})
-    @tensor tmp[-1 -2;-3 -4] ≔ El.t[-1,-3,1] * A.Elements[1,2,-4] * mpo.t[-2,2]
+    @tensor tmp[-1 -2;-3 -4] ≔ El.t[-1,-3,1] * A.A[1,2,-4] * mpo.t[-2,2]
     return LeftCompositeEnvironmentTensor(tmp)
 end
 function contract(El::LeftEnvironmentTensor{3},A::MPSTensor{3}, mpo::DenseMPOTensor{3})
-    @tensor tmp[-1 -2;-3] ≔ El.t[-1,3,1] * A.Elements[1,2,-3] * mpo.t[-2,3,2]
+    @tensor tmp[-1 -2;-3] ≔ El.t[-1,3,1] * A.A[1,2,-3] * mpo.t[-2,3,2]
     return LeftCompositeEnvironmentTensor(tmp)
 end
 function contract(El::LeftCompositeEnvironmentTensor{2,3},Er::RightEnvironmentTensor{2})

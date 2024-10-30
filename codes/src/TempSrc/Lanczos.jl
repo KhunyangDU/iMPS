@@ -10,13 +10,17 @@ end
 function _initialMPS(O::SparseProjectiveHamiltonian{1})
     codom = ⊗(map(x -> collect(domain(x))[end],[O.EnvL.envt[1].t, O.H.Mats[1].m[1,1].t])...)
     dom = collect(codomain(O.EnvR.envt[1].t))[1]
-    return MPSTensor(randn,codom,dom)
+    tmp = CompositeMPSTensor(randn,codom,dom)
+    normalize!(tmp)
+    return tmp
 end
 
 function _initialMPS(O::SparseProjectiveHamiltonian{2})
     codom = ⊗(map(x -> collect(domain(x))[end],[O.EnvL.envt[1].t, [O.H.Mats[i].m[1,1].t for i in 1:2]...])...)
     dom = collect(codomain(O.EnvR.envt[1].t))[1]
-    return CompositeMPSTensor(randn,codom,dom)
+    tmp = CompositeMPSTensor(randn,codom,dom)
+    normalize!(tmp)
+    return tmp
 end
 
 function Lanczos(O::SparseProjectiveHamiltonian{N}, q1::AbstractMPSTensor,
