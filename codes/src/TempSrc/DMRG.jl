@@ -40,3 +40,14 @@ function DMRG2!(Env::Environment{3}, D_MPS::Int64;
     
     return lsE
 end
+
+
+function DMRG2!(ψ::DenseMPS, H::SparseMPO, D_MPS::Int64;
+    kwargs...)
+    @time "Initialize Environment" begin
+        Env = Environment([ψ,H,adjoint(ψ)])
+        initialize!(Env)
+    end
+    lsE = DMRG2!(Env, D_MPS;kwargs...)
+    return Env.layer[1], lsE
+end

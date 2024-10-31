@@ -99,6 +99,10 @@ function trivial(::GradedSpace{I, D}) where {I, D}
     return GradedSpace{I,D}(dims, false)
 end
 
+function trivial(::ComplexSpace)
+    return ℂ^1
+end
+
 function normalize!(obj::DenseMPS{L,T}) where {L,T}
     @assert 1 == obj.center[1] == obj.center[2]
     obj.ts[1] /= norm(obj.ts[1])

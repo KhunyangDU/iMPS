@@ -61,6 +61,8 @@ include("TempSrc/contract.jl")
 include("TempSrc/Lanczos.jl")
 include("TempSrc/DMRG.jl")
 include("TempSrc/TDVP.jl")
+include("TempSrc/observables.jl")
+
 
 #= 
 MPO data matrix should be the hermitian conjugate of the 

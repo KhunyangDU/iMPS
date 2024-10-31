@@ -1,4 +1,6 @@
-struct ObserableTree{N}
+abstract type AbstractObservableForest end
+
+struct ObserableTree{N} <: AbstractObservableForest
     Root::InteractionTreeNode
     function ObserableTree{N}() where N
          
@@ -12,7 +14,7 @@ struct ObserableTree{N}
     ObserableTree() = ObserableTree{0}()
 end
 
-struct ObserableForest{N}
+struct ObserableForest{N} <: AbstractObservableForest
     Roots::InteractionTreeNode
     function ObserableForest{N}() where N
          

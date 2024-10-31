@@ -41,7 +41,7 @@ end
 
 end
 
-module TrivialSpin
+module TrivialSpinOneHalf
 
 using TensorKit
 
@@ -64,6 +64,11 @@ end
 
 const S₊ = Sx + 1im * Sy
 const S₋ = S₊'
+
+const SxSx = Sx,Sx 
+const SySy = Sy,Sy 
+const SzSz = Sz,Sz 
+
 
 end
 
