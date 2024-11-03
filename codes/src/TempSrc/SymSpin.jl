@@ -36,7 +36,10 @@ const S₊S₋ = let
 end
 
 const S₋S₊ = let 
-    map( x -> permute(x...), ( S₊S₋ |> y->((y[1]',((1,),(3,2))),(y[2]',((1,3),(2,)))) ) )
+    AuxSpace = Rep[U₁](-1 => 1)
+    OpL = TensorMap(ones, PhySpace, PhySpace ⊗ AuxSpace)
+    OpR = permute(OpL', ((1,2), (3,)))
+    OpL, OpR
 end
 
 end

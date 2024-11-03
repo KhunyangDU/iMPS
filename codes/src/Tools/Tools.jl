@@ -49,7 +49,7 @@ end
 
 function ApproxReal(Qi::Number;tol::Float64=1e-5)
     imag(Qi) <= tol && return real(Qi)
-    @error "not real"
+    @error "$(Qi) not real"
 end
 
 function centralize(data::Union{Vector,OrdinalRange,StepRangeLen})

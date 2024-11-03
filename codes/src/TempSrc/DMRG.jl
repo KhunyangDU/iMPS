@@ -18,18 +18,14 @@ function DMRG2!(Env::Environment{3}, D_MPS::Int64;
             for site in 1:L-1
                 Eg,Ev = groundEig(projright2(H,Env,site),LanczosLevel)
                 tl, tr, temptruncerr = tsvd(Ev; direction=:right,trunc = truncdim(D_MPS))
-                Env.layer[1].ts[site:site+1] = map(MPSTensor, [tl, tr])
-                Env.layer[3].ts[site:site+1] = adjoint(Env.layer[1].ts[site:site+1])
-                pushright!(Env)
+                pushright!(Env,map(MPSTensor, [tl, tr])...)
                 totaltruncerror = max(totaltruncerror,temptruncerr)
             end
             println("<<<<<< Left <<<<<<")
             for site in L:-1:2
                 Eg,Ev = groundEig(projleft2(H,Env,site),LanczosLevel)
                 tl, tr, temptruncerr = tsvd(Ev; direction=:left,trunc = truncdim(D_MPS))
-                Env.layer[1].ts[site-1:site] = map(MPSTensor, [tl, tr])
-                Env.layer[3].ts[site-1:site] = adjoint(Env.layer[1].ts[site-1:site])
-                pushleft!(Env)
+                pushleft!(Env,map(MPSTensor, [tl, tr])...)
                 totaltruncerror = max(totaltruncerror,temptruncerr)
             end
             push!(lsE, Eg)
@@ -41,6 +37,19 @@ function DMRG2!(Env::Environment{3}, D_MPS::Int64;
     return lsE
 end
 
+function pushright!(Env::Environment{3},tl::MPSTensor, tr::MPSTensor)
+    @assert (site = Env.center[1] ) == Env.center[2]
+    Env.layer[1].ts[site:site+1] = [tl,tr]
+    Env.layer[3].ts[site:site+1] = adjoint(Env.layer[1].ts[site:site+1])
+    pushright!(Env)
+end
+
+function pushleft!(Env::Environment{3},tl::MPSTensor, tr::MPSTensor)
+    @assert (site = Env.center[1] ) == Env.center[2]
+    Env.layer[1].ts[site-1:site] = [tl, tr]
+    Env.layer[3].ts[site-1:site] = adjoint(Env.layer[1].ts[site-1:site])
+    pushleft!(Env)
+end
 
 function DMRG2!(ψ::DenseMPS, H::SparseMPO, D_MPS::Int64;
     kwargs...)
