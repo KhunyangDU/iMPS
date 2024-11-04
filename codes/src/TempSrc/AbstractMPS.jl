@@ -53,7 +53,7 @@ Generate rand MPS for initial state.
 """
 function randMPS(PhySpaces::Vector,AuxSpaces::Vector;type::Type = Float64)
     @assert (L = length(PhySpaces)) == length(AuxSpaces)
-    push!(AuxSpaces,trivial(PhySpaces[1]))
+    push!(AuxSpaces, trivial(PhySpaces[1]))
     tmp = Vector{MPSTensor}(undef,L)
     for i in 1:L
         tmp[i] = MPSTensor(randn,AuxSpaces[i] ⊗ PhySpaces[i],AuxSpaces[i+1])
@@ -91,7 +91,7 @@ function getAuxSpace(t::MPS)
 end
 
 function getAuxSpace(t::MPSTensor)
-    return codomain(t.A)[1]
+    return collect(codomain(t.A))[1], collect(domain(t.A))[end]
 end
 
 function trivial(::GradedSpace{I, D}) where {I, D}

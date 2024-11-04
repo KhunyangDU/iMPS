@@ -49,7 +49,51 @@ end
 
 end
 
-module SpinlessFermion
+module U₁Fermion 
+
+using TensorKit
+
+const PhySpace = Rep[U₁](0 => 1, 1 => 1, -1 => 1)
+
+const Z = let 
+    tmp = TensorMap(zeros,PhySpace,PhySpace)
+    block(tmp,Irrep[U₁](-1)) .= 1
+    block(tmp,Irrep[U₁](0)) .= -1
+    block(tmp,Irrep[U₁](1)) .= 1
+    tmp
+end
+
+const n = let 
+    tmp = TensorMap(zeros,PhySpace,PhySpace)
+    block(tmp,Irrep[U₁](-1)) .= 0
+    block(tmp,Irrep[U₁](0)) .= 1
+    block(tmp,Irrep[U₁](1)) .= 2
+    tmp
+end
+
+const nd = let 
+    tmp = TensorMap(zeros,PhySpace,PhySpace)
+    block(tmp,Irrep[U₁](1)) .= 1
+    tmp
+end
+
+F⁺F = let 
+    AuxSpace = Rep[U₁](1 => 1)
+    F⁺ = TensorMap(ones, PhySpace, PhySpace ⊗ AuxSpace)
+    F = permute(F⁺', (1,2), (3,))
+    F⁺, F
+end
+
+const FF⁺ = let 
+    AuxSpace = Rep[U₁](-1 => 1)
+    F = TensorMap(ones, PhySpace, PhySpace ⊗ AuxSpace)
+    F⁺ = permute(F', (1,2), (3,))
+    F, F⁺
+end
+
+end
+
+module TrivialFermion
 using TensorKit
 const PhySpace = ℂ^2
 const Z = TensorMap([-1 0; 0 1],PhySpace,PhySpace)

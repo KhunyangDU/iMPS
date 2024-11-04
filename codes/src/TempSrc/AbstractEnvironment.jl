@@ -190,9 +190,11 @@ end
 
 function setdefault!(env::Environment)
     if issparse(env.layer[2])
-        AuxSpace = getAuxSpace(env.layer[1])
+        AuxSpace = getAuxSpace(env.layer[1].ts[1])[1]
         tmp = isometry(AuxSpace,AuxSpace)
         env.envs[1] = SparseLeftEnvironmentTensor(tmp)
+        AuxSpace = getAuxSpace(env.layer[1].ts[end])[2]
+        tmp = isometry(AuxSpace,AuxSpace)
         env.envs[end] = SparseRightEnvironmentTensor(tmp)
     end
 end
