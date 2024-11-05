@@ -72,7 +72,7 @@ function calObs(ψ::DenseMPS{L,T},
             tempDict[subRoot.Opr.name] = let 
                 Env = Environment([ψ, AutomataSparseMPO(InteractionTree(subRoot),L), adjoint(ψ)])
                 initialize!(Env)
-                ApproxReal(scalar(Env))
+                real(scalar(Env))
             end
         end
         ObsDict[Root.Opr.name] = tempDict

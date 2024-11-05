@@ -51,9 +51,10 @@ end
 """
 Generate rand MPS for initial state.
 """
-function randMPS(PhySpaces::Vector,AuxSpaces::Vector;type::Type = Float64)
+function randMPS(PhySpaces::Vector,AuxSpaces::Vector;
+    type::Type = Float64,tailSpace::ElementarySpace = trivial(PhySpaces[1]))
     @assert (L = length(PhySpaces)) == length(AuxSpaces)
-    push!(AuxSpaces, trivial(PhySpaces[1]))
+    push!(AuxSpaces, tailSpace)
     tmp = Vector{MPSTensor}(undef,L)
     for i in 1:L
         tmp[i] = MPSTensor(randn,AuxSpaces[i] ⊗ PhySpaces[i],AuxSpaces[i+1])
@@ -61,7 +62,7 @@ function randMPS(PhySpaces::Vector,AuxSpaces::Vector;type::Type = Float64)
 
     obj = MPS{L,type}(tmp)
 
-    canonicalize!(obj, Lx)
+    canonicalize!(obj, L)
     canonicalize!(obj, 1)
     normalize!(obj)
 
@@ -69,8 +70,8 @@ function randMPS(PhySpaces::Vector,AuxSpaces::Vector;type::Type = Float64)
 end
 
 
-function randMPS(PhySpace::IndexSpace,AuxSpaces::Vector)
-    return randMPS([PhySpace for i in eachindex(AuxSpaces)],AuxSpaces)
+function randMPS(PhySpace::IndexSpace,AuxSpaces::Vector;kwargs...)
+    return randMPS([PhySpace for i in eachindex(AuxSpaces)],AuxSpaces;kwargs...)
 end
 
 

@@ -34,6 +34,16 @@ mutable struct MPSTensor{R} <: AbstractMPSTensor{R}
         return new{rank(A)}(A)
     end
 
+    function MPSTensor(data::AbstractMatrix,codomain,domain)
+        A = TensorMap(data[:],codomain,domain)
+        return new{rank(A)}(A)
+    end
+
+    function MPSTensor(data::AbstractVector,codomain,domain)
+        A = TensorMap(data,codomain,domain)
+        return new{rank(A)}(A)
+    end
+
 end
 """
 Wrapper type for ajoint of MPS local tensors.
