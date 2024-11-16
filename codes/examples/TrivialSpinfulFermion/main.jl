@@ -1,9 +1,9 @@
 using TensorKit
-include("../../../src/iMPS.jl")
+include("../../src/iMPS.jl")
 include("model.jl")
 
 
-Lx = 8
+Lx = 4
 Ly = 1
 
 ψ = let 
@@ -14,9 +14,9 @@ end
 Latt = YCSqua(Lx,Ly)
 
 
-t = -1
-U = 8
-μ = U/2
+t = 1
+U = 0
+μ = 0
 H = let 
     Root = InteractionTreeNode()
     LocalSpace = TrivialSpinfulFermion
@@ -27,15 +27,17 @@ H = let
     end
     
     for pair in neighbor(Latt)
-        addIntr!(Root,LocalSpace.F⁺F,pair,("F⁺","F"),t,LocalSpace.Z)
-        addIntr!(Root,LocalSpace.FF⁺,pair,("F","F⁺"),t,LocalSpace.Z)
+        addIntr!(Root,LocalSpace.F₊⁺F₊,pair,("F₊⁺","F₊"),-t,LocalSpace.Z)
+        addIntr!(Root,LocalSpace.F₊F₊⁺,pair,("F₊","F₊⁺"),t,LocalSpace.Z)
+        addIntr!(Root,LocalSpace.F₋⁺F₋,pair,("F₋⁺","F₋"),-t,LocalSpace.Z)
+        addIntr!(Root,LocalSpace.F₋F₋⁺,pair,("F₋","F₋⁺"),t,LocalSpace.Z)
     end
 
     AutomataSparseMPO(InteractionTree(Root),size(Latt))
 end
-D = 2^7
+D = 2^6
 
-ψ,lsE = DMRG2!(ψ,H,D)
+ψ,lsE = DMRG2!(ψ,H,D;LanczosLevel = 30)
 showQuantSweep(lsE)
 
 @time "calculate observables" begin

@@ -1,5 +1,5 @@
 using TensorKit
-include("../../../src/iMPS.jl")
+include("../../src/iMPS.jl")
 include("model.jl")
 
 Lx = 8

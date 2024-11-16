@@ -48,6 +48,26 @@ function addIntr2!(
     end
 
     # add the right Opr
+    if !isnothing(Z)
+        _addZ!(OprR,Z)
+    end
+
     addchild!(current_node, OprR)
     current_node.children[end].Opr.strength = strength
 end
+
+function _addZ!(OprR::LocalOperator, Z::AbstractTensorMap)
+    OprR.Opri = _addZ(OprR.Opri,Z)
+    OprR.name = string("Z",OprR.name)
+end
+
+function _addZ(Opri::AbstractTensorMap{S₁,2,1}, Z::AbstractTensorMap{S₂,1,1}) where {S₁,S₂}
+    @tensor tmp[-1 -2;-3] ≔ Z[-1,1] * Opri[1,-2,-3]
+    return tmp
+end
+
+function _addZ(Opri::AbstractTensorMap{S₁,1,1}, Z::AbstractTensorMap{S₂,1,1}) where {S₁,S₂}
+    @tensor tmp[-1;-2] ≔ Z[-1,1] * Opri[1,-2]
+    return tmp
+end
+

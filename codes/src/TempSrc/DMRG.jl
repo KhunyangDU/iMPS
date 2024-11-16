@@ -37,6 +37,14 @@ function DMRG2!(Env::Environment{3}, D_MPS::Int64;
     return lsE
 end
 
+function DMRG2!(Env::Environment{3}, lsD::Vector{Int64};kwargs...)
+    lsinfo = Vector(undef,length(lsD))
+    for (i,D) in enumerate(lsD)
+        lsinfo[i] = @benchmark DMRG2!($Env, $D; $kwargs...)
+    end
+    return lsinfo
+end
+
 function pushright!(Env::Environment{3},tl::MPSTensor, tr::MPSTensor)
     @assert (site = Env.center[1] ) == Env.center[2]
     Env.layer[1].ts[site:site+1] = [tl,tr]
@@ -60,3 +68,14 @@ function DMRG2!(ψ::DenseMPS, H::SparseMPO, D_MPS::Int64;
     lsE = DMRG2!(Env, D_MPS;kwargs...)
     return Env.layer[1], lsE
 end
+
+function DMRG2!(ψ::DenseMPS, H::SparseMPO, lsD::Vector{Int64};
+    kwargs...)
+    @time "Initialize Environment" begin
+        Env = Environment([ψ,H,adjoint(ψ)])
+        initialize!(Env)
+    end
+    lsinfo = DMRG2!(Env, lsD;kwargs...)
+    return lsinfo
+end
+
