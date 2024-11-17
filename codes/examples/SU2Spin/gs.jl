@@ -6,12 +6,14 @@ include("model.jl")
 Lx = 4
 Ly = 4
 
-AuxSpace = vcat(Rep[SU₂](0 => 1),repeat([Rep[SU₂](i => 1 for i in 0:1//2:1),], Lx*Ly-1))
-PhySpace = SU₂Spin.PhySpace 
-
-ψ = randMPS(PhySpace,AuxSpace)
+ψ = let 
+    AuxSpace = vcat(Rep[SU₂](0 => 1),repeat([Rep[SU₂](i => 1 for i in 0:1//2:1),], Lx*Ly-1))
+    randMPS(SU₂Spin.PhySpace ,AuxSpace)
+end
 
 Latt = YCSqua(Lx,Ly)
+@save "examples/SU2Spin/data/Latt_$(Lx)x$(Ly).jld2" Latt
+
 J = 1
 D = 2^10
 
@@ -30,5 +32,9 @@ showQuantSweep(lsE)
     calObs!(Obs, ψ)
 end
 
-Obs.values
+gsObs = Obs.values
+gsψ = ψ
+
+@save "examples/SU2Spin/data/gsψ_$(Lx)x$(Ly)_$(D).jld2" gsψ
+@save "examples/SU2Spin/data/gsObs_$(Lx)x$(Ly)_$(D).jld2" gsObs
 

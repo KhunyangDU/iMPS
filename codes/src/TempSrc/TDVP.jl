@@ -64,6 +64,17 @@ function TDVP2!(Env::Environment{3}, t::Number, Nt::Int64, D_MPS::Int64;
     return lsψ, lst
 end
 
+function TDVP2!(ψ::DenseMPS, H::SparseMPO, t::Number, Nt::Int64, D_MPS::Int64;
+    kwargs...)
+    @time "Initialize Environment" begin
+        Env = Environment([ψ,H,adjoint(ψ)])
+        initialize!(Env)
+    end
+    lsψ, lst = TDVP2!(Env,t, Nt, D_MPS;kwargs...)
+    return lsψ, lst
+end
+
+
 function evolve!(
     obj::AbstractMPSTensor,
     O::SparseProjectiveHamiltonian{N}, τ::Number, LanczosLevel::Int64) where N

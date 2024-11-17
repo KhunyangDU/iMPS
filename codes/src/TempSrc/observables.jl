@@ -51,14 +51,14 @@ function addObs!(Obs::MPSObservable,
     update!(Obs)
 end
 
-function calObs!(Obs::MPSObservable, ψ::DenseMPS)
+function calObs!(Obs::MPSObservable, ψ::DenseMPS; destroy::Bool = true)
     Obs.values = calObs(ψ,Obs.forest)
-    Obs.forest = nothing
+    destroy && (Obs.forest = nothing)
 end
 
-function calObs!(Obs::MPSObservable, Env::Environment)
+function calObs!(Obs::MPSObservable, Env::Environment; destroy::Bool = true)
     Obs.values = calObs(Env.layer[1],Obs.forest)
-    Obs.forest = nothing
+    destroy && (Obs.forest = nothing)
 end
 
 function calObs(ψ::DenseMPS{L,T},

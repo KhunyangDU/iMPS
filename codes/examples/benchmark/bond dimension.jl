@@ -38,7 +38,8 @@ end
 end
 
 lsinfo = Vector(undef,length(lsD))
-for (i,D) in enumerate(lsD) 
+for (i,D) in enumerate(lsD)
+    i < 12 && continue
     @show i
     tmpinfo = @benchmark DMRG2!($Env, $D;Nsweep = 4)
     @save "examples/benchmark/data/tmpinfo_$(i)_$(Lx)x$(Ly).jld2" tmpinfo

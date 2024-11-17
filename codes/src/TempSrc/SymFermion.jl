@@ -117,15 +117,15 @@ end
 
 const S₊S₋ = let 
     AuxSpace = Rep[U₁×U₁]((0,1) => 1)
-    OpL = TensorMap(ones, PhySpace, PhySpace ⊗ AuxSpace)
-    OpR = permute(OpL', ((1,2), (3,)))
+    OpL = TensorMap(ones, PhySpace, AuxSpace ⊗ PhySpace)
+    OpR = permute(OpL', ((2,1), (3,)))
     OpL, OpR
 end
 
 const S₋S₊ = let 
     AuxSpace = Rep[U₁×U₁]((0,-1) => 1)
-    OpL = TensorMap(ones, PhySpace, PhySpace ⊗ AuxSpace)
-    OpR = permute(OpL', ((1,2), (3,)))
+    OpL = TensorMap(ones, PhySpace, AuxSpace ⊗ PhySpace)
+    OpR = permute(OpL', ((2,1), (3,)))
     OpL, OpR
 end
 

@@ -1,7 +1,7 @@
 using TensorKit
 include("../../src/iMPS.jl")
 include("model.jl")
-
+# some problems left (up and down's anticommutation)
 
 Lx = 4
 Ly = 1
