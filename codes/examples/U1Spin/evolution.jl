@@ -3,7 +3,7 @@ using TensorKit
 include("../../src/iMPS.jl")
 include("model.jl")
 
-Lx = 16
+Lx = 8
 Ly = 1
 Latt = YCSqua(Lx,Ly)
 @save "examples/U1Spin/data/Latt_$(Lx)x$(Ly).jld2" Latt
@@ -11,7 +11,7 @@ Latt = YCSqua(Lx,Ly)
 J = 1
 H = Hamiltonian(Latt,J,J/2)
 
-D = 2^6
+D = 2^4
 ψ = let 
     AuxSpaces = vcat(Rep[U₁](mod(size(Latt),2) // 2 => 1),repeat([Rep[U₁](i => 1 for i in -size(Latt)//2:1//2:size(Latt)//2),], Lx*Ly-1))
     L = length(AuxSpaces)
@@ -28,7 +28,7 @@ D = 2^6
         tmp[i] = MPSTensor(permute(siteTensor,(1,3),(2,)))
     end
 
-    obj = MPS{L,Float64}(tmp)
+    obj = DenseMPS{L,Float64}(tmp)
 
     canonicalize!(obj, L)
     canonicalize!(obj, 1)

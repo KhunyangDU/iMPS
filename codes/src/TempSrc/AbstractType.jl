@@ -207,10 +207,57 @@ end
 abstract type AbstractMPOTensor end
 
 mutable struct DenseMPOTensor{R} <: AbstractMPOTensor
-    t::AbstractTensorMap
+    A::AbstractTensorMap
 
     function DenseMPOTensor(t::AbstractTensorMap)
         return new{rank(t)}(t)
+    end
+end
+
+
+mutable struct AdjointMPOTensor{R} <: AbstractMPOTensor
+    A::AbstractTensorMap
+
+    function AdjointMPOTensor(t::AbstractTensorMap)
+        return new{rank(t)}(t)
+    end
+end
+
+function getAuxSpace(t::DenseMPOTensor{4})
+    return collect(codomain(t.A))[2], collect(domain(t.A))[1]
+end
+
+function getAuxSpace(t::AdjointMPOTensor{4})
+    return collect(domain(t.A))[2], collect(codomain(t.A))[1]
+end
+
+
+function Base.adjoint(t::DenseMPOTensor)
+    return AdjointMPOTensor(t.A')
+end
+
+function Base.adjoint(ts::Vector{DenseMPOTensor})
+    return convert(Vector{AdjointMPOTensor},[AdjointMPOTensor(t.A') for t in ts])
+end
+
+function Base.adjoint(t::AdjointMPOTensor)
+    return DenseMPOTensor(t.A')
+end
+
+function Base.adjoint(ts::Vector{AdjointMPOTensor})
+    return convert(Vector{DenseMPOTensor},[DenseMPOTensor(t.A') for t in ts])
+end
+
+mutable struct CompositeMPOTensor{N, R} <: AbstractMPOTensor
+    A::AbstractTensorMap
+
+    function CompositeMPOTensor(A::AbstractTensorMap)
+        return new{length(codomain(A))-1, rank(A)}(A)
+    end
+
+    function CompositeMPOTensor(fc::Function, codom, dom)
+        A = TensorMap(fc,codom,dom)
+        return new{length(codomain(A))-1, rank(A)}(A)
     end
 end
 
@@ -231,7 +278,6 @@ function Base.size(::SparseMPOTensor{N,M}) where {N,M}
 end
 
 
-
 function Base.length(::DenseMPOTensor)
     return 1
 end
@@ -245,13 +291,11 @@ function Base.iterate(::DenseMPOTensor,::Nothing)
 end
 
 abstract type AbstractMPS end
-abstract type DenseMPS{L,T} <: AbstractMPS end
-
-
 abstract type AbstractMPO end
 
 
 function rank(A::AbstractTensorMap)
     return length(codomain(A)) + length(domain(A))
 end
+
 

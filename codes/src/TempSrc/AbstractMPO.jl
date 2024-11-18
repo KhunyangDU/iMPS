@@ -1,33 +1,104 @@
 
 
 
-mutable struct SparseMPO <: AbstractMPO
-    Mats::Vector{SparseMPOTensor}
+mutable struct SparseMPO{L} <: AbstractMPO
+    ts::Vector{SparseMPOTensor}
     D::Vector{NTuple{2,Int64}}
     
-    function SparseMPO(Mats::Vector{SparseMPOTensor},
+    function SparseMPO(ts::Vector{SparseMPOTensor},
         D::Vector{NTuple{2,Int64}})
-        return new(Mats,D)
+        return new{length(ts)}(ts,D)
     end
 
-    function SparseMPO(Mats::Vector{SparseMPOTensor})
-        D = map(size,Mats)
-        return new(Mats,convert(Vector{NTuple{2,Int64}},D))
+    function SparseMPO(ts::Vector{SparseMPOTensor})
+        D = map(size,ts)
+        return new{length(ts)}(ts,convert(Vector{NTuple{2,Int64}},D))
     end
 
     function SparseMPO(t::SparseMPOTensor{N,M}) where {N,M}
         D = convert(Vector{NTuple{2,Int64}},[(N,M)])
-        Mats = convert(Vector{SparseMPOTensor},[t])
-        return new(Mats,D)        
+        ts = convert(Vector{SparseMPOTensor},[t])
+        return new{length(ts)}(ts,D)        
     end
 end
 
+function Base.length(::SparseMPO{L}) where L 
+    return L
+end
 
 function issparse(::SparseMPO)
     return true
 end
 
 
+mutable struct DenseMPO{L} <: AbstractMPO
+    ts::Vector{DenseMPOTensor}
+    center::Vector{Int64}
+    
+    function DenseMPO(A::Vector{DenseMPOTensor},center::Vector{Int64})
+        return new{length(A)}(A,center)
+    end
+
+    function DenseMPO(A::Vector{DenseMPOTensor{R}}) where R
+        return new{length(A)}(A,[1,length(A)])
+    end
+
+    function DenseMPO(t::DenseMPOTensor)
+        A = convert(Vector{DenseMPOTensor},[t])
+        return new{1}(A,[1,1])        
+    end
+
+    function DenseMPO(t::Vector{AbstractTensorMap})
+        tmp = map(DenseMPOTensor,t)
+        A = convert(Vector{DenseMPOTensor},tmp)
+        return new{length(A)}(A,[1,length(A)])        
+    end
+end
+const DenseMPQ = Union{DenseMPO,DenseMPS}
+
+
+function Base.size(t::DenseMPOTensor{4})
+    return map(dim,t.A |> x -> (codomain(x)[2],domain(x)[1]))
+end
+
+function Base.length(::DenseMPO{L}) where L
+    return L
+end
+
+
+mutable struct AdjointMPO{L} <: AbstractMPO
+    ts::Vector{AdjointMPOTensor}
+    center::Vector{Int64}
+    
+    function AdjointMPO(A::Vector{AdjointMPOTensor},center::Vector{Int64})
+        return new{length(A)}(A,center)
+    end
+
+    function AdjointMPO(A::Vector{AdjointMPOTensor{R}}) where R
+        return new{length(A)}(A,[1,length(A)])
+    end
+
+    function AdjointMPO(t::AdjointMPOTensor)
+        A = convert(Vector{AdjointMPOTensor},[t])
+        return new{1}(A,[1,1])        
+    end
+
+    function AdjointMPO(t::Vector{AbstractTensorMap})
+        tmp = map(AdjointMPOTensor,t)
+        A = convert(Vector{AdjointMPOTensor},tmp)
+        return new{length(A)}(A,[1,length(A)])        
+    end
+end
+
+function Base.adjoint(A::DenseMPO{L}) where {L}
+    return AdjointMPO(adjoint(A.ts), A.center)
+end
+
+function Base.adjoint(A::AdjointMPO{L}) where {L}
+    return DenseMPO(adjoint(A.ts), A.center)
+end
+
+issparse(::Union{DenseMPO,AdjointMPO}) = false
 
 function AutomataSparseMPO(Root::InteractionTreeNode,L::Int64=treeheight(Root) - 1)
     MPO = let 
@@ -110,6 +181,19 @@ end
 
 function AutomataSparseMPO(Tree::InteractionTree,L::Int64 = treeheight(Tree.Root) - 1)
     return AutomataSparseMPO(Tree.Root,L)
+end
+
+
+function _funcDenseMPO(func::Function,L::Int64,PhySpace::ElementarySpace,AuxSpace::ElementarySpace)
+    return DenseMPO(map(DenseMPOTensor,repeat([TensorMap(func,PhySpace ⊗ AuxSpace, AuxSpace ⊗ PhySpace),], L)))
+end
+
+function IdDenseMPO(L::Int64; PhySpace::ElementarySpace = ℂ^1, AuxSpace::ElementarySpace = (ℂ^1)')
+    return _funcDenseMPO(ones,L,PhySpace,AuxSpace)
+end
+
+function RandDenseMPO(L::Int64; PhySpace::ElementarySpace = ℂ^1, AuxSpace::ElementarySpace = (ℂ^1)')
+    return _funcDenseMPO(randn,L,PhySpace,AuxSpace)
 end
 
 

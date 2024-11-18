@@ -39,6 +39,41 @@ end
 
 
 
+function TensorKit.leftorth(elm::DenseMPOTensor{4})
+    return leftorth(elm.A,(1,2,4),(3,))
+end
+
+function TensorKit.leftorth!(A::DenseMPOTensor{4}, B::DenseMPOTensor{4})
+    Q, Rm = leftorth(A)
+    @tensor tmp[-1 -2;-3 -4] ≔ Rm[-2,1]*B.A[-1,1,-3,-4]
+    A.A = permute(Q,(1,2),(4,3))
+    B.A = tmp
+    #return map(DenseMPOTensor,[Q,tmp])
+end
+
+function TensorKit.leftorth!(obj::DenseMPO,site::Int64)
+    #obj.ts[site:site+1] = leftorth(obj.ts[site:site+1]...)
+    leftorth!(obj.ts[site:site+1]...)
+end
+
+function TensorKit.rightorth(A::DenseMPOTensor{4})
+    return rightorth(A.A,(2,),(1,3,4))
+end
+
+function TensorKit.rightorth!(A::DenseMPOTensor{4}, B::DenseMPOTensor{4})
+    Lm,Q = rightorth(B)
+    @tensor tmp[-1 -2;-3 -4] ≔ A.A[-1,-2,1,-4]*Lm[1,-3]
+    A.A = tmp
+    B.A = permute(Q,(2,1),(3,4))
+    #return map(DenseMPOTensor,[,])
+end
+
+function TensorKit.rightorth!(obj::DenseMPO,site::Int64)
+    #obj.ts[site-1:site] = rightorth(obj.ts[site-1:site]...)
+    rightorth!(obj.ts[site-1:site]...)
+end
+
+
 function TensorKit.tsvd(A::CompositeMPSTensor{2, R}; direction::Symbol=:center, kwargs...) where {R}
     @assert direction in [:center,:left,:right]
     U,S,V,ϵ = tsvd(A.A,(1,2),tuple(3:R...);kwargs...)
@@ -51,8 +86,20 @@ function TensorKit.tsvd(A::CompositeMPSTensor{2, R}; direction::Symbol=:center, 
     end
 end
 
+function TensorKit.tsvd(A::CompositeMPOTensor{2,6}; direction::Symbol=:center, kwargs...)
+    @assert direction in [:center,:left,:right]
+    U,S,V,ϵ = tsvd(A.A,(1,4,5),(2,3,6);kwargs...)
+    if direction == :center
+        return permute(U,(2,3),(1,4)),S,permute(V,(1,4),(2,3)),ϵ
+    elseif direction == :left 
+        return permute(U*S,(2,3),(1,4)),permute(V,(1,4),(2,3)),ϵ
+    elseif direction == :right 
+        return permute(U,(2,3),(1,4)),permute(S*V,(1,4),(2,3)),ϵ
+    end
+end
 
-function canonicalize!(obj::DenseMPS{L,T},sl::Int64,sr::Int64) where {L,T}
+
+function canonicalize!(obj::Union{DenseMPO{L},DenseMPS{L}},sl::Int64,sr::Int64) where {L}
     @assert 1 ≤ sl ≤ sr ≤ L 
 
     for sli in obj.center[1]:sl-1
@@ -68,7 +115,16 @@ function canonicalize!(obj::DenseMPS{L,T},sl::Int64,sr::Int64) where {L,T}
 end
 
 
-function canonicalize!(obj::DenseMPS{L,T},si::Int64) where {L,T}
+function canonicalize!(obj::Union{DenseMPO{L},DenseMPS{L}},si::Int64) where {L}
     @assert 1 ≤ si ≤ L 
     canonicalize!(obj,si,si)
+end
+
+function normalize!(obj::Union{DenseMPO{L},DenseMPS{L}}) where {L}
+    @assert 1 == obj.center[1] == obj.center[2]
+    normalize!(obj.ts[1])
+end
+
+function normalize!(obj::Union{AbstractMPOTensor,AbstractMPSTensor})
+    obj.A = obj.A / norm(obj.A)
 end

@@ -15,11 +15,11 @@ end
     for i in 1:M
         tmp = nothing
         for j in 1:N
-            isnothing(O.H.Mats[1].m[j,i]) && continue
+            isnothing(O.H.ts[1].m[j,i]) && continue
             if isnothing(tmp)
-                tmp = contract(O.EnvL.envt[j], obj, O.H.Mats[1].m[j,i])
+                tmp = contract(O.EnvL.envt[j], obj, O.H.ts[1].m[j,i])
             else 
-                tmp += contract(O.EnvL.envt[j], obj, O.H.Mats[1].m[j,i])
+                tmp += contract(O.EnvL.envt[j], obj, O.H.ts[1].m[j,i])
             end
         end
         ref += contract(tmp,O.EnvR.envt[i])
@@ -34,16 +34,16 @@ end =#
     @show N,M
 
     tmp1 = Vector{Any}(nothing,M)
-    @show O.H.Mats[1].m[1,1],O.H.Mats[1].m[1,2]
+    @show O.H.ts[1].m[1,1],O.H.ts[1].m[1,2]
 
     for i in 1:M, j in 1:N
-        isnothing(O.H.Mats[1].m[j,i]) && continue
+        isnothing(O.H.ts[1].m[j,i]) && continue
         if isnothing(tmp1[i])
-            tmp1[i] = contract(O.EnvL.envt[j], obj, O.H.Mats[1].m[j,i])
+            tmp1[i] = contract(O.EnvL.envt[j], obj, O.H.ts[1].m[j,i])
         else 
-            tmp1[i] += contract(O.EnvL.envt[j], obj, O.H.Mats[1].m[j,i])
+            tmp1[i] += contract(O.EnvL.envt[j], obj, O.H.ts[1].m[j,i])
         end
-        @show i,space(tmp1[i].t)
+        @show i,space(tmp1[i].A)
     end
 
     ref = obj.A * 0
@@ -53,17 +53,17 @@ end =#
     for i in 1:M
         tmp2 = nothing
         for j in 1:N
-            isnothing(O.H.Mats[2].m[j,i]) && continue
+            isnothing(O.H.ts[2].m[j,i]) && continue
             @show i,j
-            @show tmp1[j].t
-            @show O.H.Mats[2].m[j,i].t
-            @show O.EnvR.envt[i].t
+            @show tmp1[j].A
+            @show O.H.ts[2].m[j,i].A
+            @show O.EnvR.envt[i].A
             if isnothing(tmp2)
-                tmp2 = contract(tmp1[j], O.H.Mats[2].m[j,i])
+                tmp2 = contract(tmp1[j], O.H.ts[2].m[j,i])
             else 
-                tmp2 += contract(tmp1[j], O.H.Mats[2].m[j,i])
+                tmp2 += contract(tmp1[j], O.H.ts[2].m[j,i])
             end
-            @show space(tmp2.t)
+            @show space(tmp2.A)
         end
         ref += contract(tmp2,O.EnvR.envt[i])
     end
@@ -76,8 +76,8 @@ function action1(O::SparseProjectiveHamiltonian{1},obj::MPSTensor{3})
     ts = obj.A * 0
 
     for i in 1:N, j in 1:M
-        isnothing(O.H.Mats[1].m[i,j]) && continue
-        tmp = contract(O.EnvL.envt[i], obj, O.H.Mats[1].m[i,j])
+        isnothing(O.H.ts[1].m[i,j]) && continue
+        tmp = contract(O.EnvL.envt[i], obj, O.H.ts[1].m[i,j])
         ts += contract(tmp,O.EnvR.envt[j])
     end
 
@@ -92,9 +92,9 @@ function action2(O::SparseProjectiveHamiltonian{2},obj::CompositeMPSTensor{2,4})
     ts = obj.A * 0
 
     for i in 1:N, j in 1:M1, k in 1:R
-        isnothing(O.H.Mats[1].m[i,j]) | isnothing(O.H.Mats[2].m[j,k]) && continue
-        tmp1 = contract(O.EnvL.envt[i], obj, O.H.Mats[1].m[i,j])
-        tmp2 = contract(tmp1, O.H.Mats[2].m[j,k])
+        isnothing(O.H.ts[1].m[i,j]) | isnothing(O.H.ts[2].m[j,k]) && continue
+        tmp1 = contract(O.EnvL.envt[i], obj, O.H.ts[1].m[i,j])
+        tmp2 = contract(tmp1, O.H.ts[2].m[j,k])
         ts += contract(tmp2,O.EnvR.envt[k])
     end
 
@@ -102,7 +102,7 @@ function action2(O::SparseProjectiveHamiltonian{2},obj::CompositeMPSTensor{2,4})
 end
 
 function contract(El::LeftCompositeEnvironmentTensor{3,5}, mpo::DenseMPOTensor{2})
-    @tensor tmp[-1 -2 -3;-4 -5] ≔ El.t[-1,-2,1,-4,-5] * mpo.t[-3,1]
+    @tensor tmp[-1 -2 -3;-4 -5] ≔ El.A[-1,-2,1,-4,-5] * mpo.A[-3,1]
     return LeftCompositeEnvironmentTensor(tmp)
 end
 

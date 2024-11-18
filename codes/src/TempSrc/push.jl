@@ -1,4 +1,4 @@
-function pushleft!(env::Environment{3})
+function pushleft!(env::Environment{R}) where R
     @assert 1 ≤ env.center[1] ≤ env.center[2] ≤ env.L
 
     env.envs[env.center[2]] = pushleft(env.layer..., env.envs[env.center[2] + 1], env.center[2])
@@ -7,22 +7,22 @@ function pushleft!(env::Environment{3})
     ( env.center[1] > env.center[2] ) && ( env.center[1] -= 1 )
 end
 
-function pushleft(A::DenseMPS, mpo::SparseMPO, B::DenseMPS, EnvR::SparseRightEnvironmentTensor, site::Int64)
+function pushleft(A::AbstractMPS, mpo::SparseMPO, B::AbstractMPS, EnvR::SparseRightEnvironmentTensor, site::Int64)
     @assert mpo.D[site][2] == EnvR.D
     tmpEnvR = Vector{Any}(nothing,mpo.D[site][1])
     for i in eachindex(tmpEnvR), j in 1:EnvR.D
-        isnothing(mpo.Mats[site].m[i,j]) && continue
+        isnothing(mpo.ts[site].m[i,j]) && continue
         if isnothing(tmpEnvR[i])
-            tmpEnvR[i] = contract(A.ts[site], mpo.Mats[site].m[i,j], B.ts[site], EnvR.envt[j])
+            tmpEnvR[i] = contract(A.ts[site], mpo.ts[site].m[i,j], B.ts[site], EnvR.envt[j])
         else 
-            tmpEnvR[i] += contract(A.ts[site], mpo.Mats[site].m[i,j], B.ts[site], EnvR.envt[j])
+            tmpEnvR[i] += contract(A.ts[site], mpo.ts[site].m[i,j], B.ts[site], EnvR.envt[j])
         end
     end
     return SparseRightEnvironmentTensor(convert(Vector{RightEnvironmentTensor},tmpEnvR))
 end
 
 
-function pushright!(env::Environment{3})
+function pushright!(env::Environment{R}) where R
     @assert 1 ≤ env.center[1] ≤ env.center[2] ≤ env.L
 
     env.envs[env.center[1] + 1] = pushright(env.layer..., env.envs[env.center[1]], env.center[1])
@@ -31,61 +31,92 @@ function pushright!(env::Environment{3})
     ( env.center[1] > env.center[2] ) && ( env.center[2] += 1 )
 end
 
-function pushright(A::DenseMPS, mpo::SparseMPO, B::DenseMPS, EnvL::SparseLeftEnvironmentTensor, site::Int64)
+function pushright(A::AbstractMPS, mpo::SparseMPO, B::AbstractMPS, EnvL::SparseLeftEnvironmentTensor, site::Int64)
     @assert mpo.D[site][1] == EnvL.D
     tmpEnvL = Vector{Any}(nothing,mpo.D[site][2])
     for i in eachindex(tmpEnvL), j in 1:EnvL.D
-        isnothing(mpo.Mats[site].m[j,i]) && continue
+        isnothing(mpo.ts[site].m[j,i]) && continue
         if isnothing(tmpEnvL[i])
-            tmpEnvL[i] = contract(A.ts[site], mpo.Mats[site].m[j,i], B.ts[site],EnvL.envt[j])
+            tmpEnvL[i] = contract(A.ts[site], mpo.ts[site].m[j,i], B.ts[site],EnvL.envt[j])
         else 
-            tmpEnvL[i] += contract(A.ts[site], mpo.Mats[site].m[j,i], B.ts[site],EnvL.envt[j])
+            tmpEnvL[i] += contract(A.ts[site], mpo.ts[site].m[j,i], B.ts[site],EnvL.envt[j])
         end
     end
 
     return SparseLeftEnvironmentTensor(convert(Vector{LeftEnvironmentTensor},tmpEnvL))
 end
 
+function pushright!(env::Environment{N}, tl::DenseMPOTensor{4}, tr::DenseMPOTensor{4}) where N
+    @assert (site = env.center[1] ) == env.center[2]
+    env.layer[end].ts[site:site+1] = map(adjoint,[tl,tr])
+    env.layer[end].center = env.center
+    map(v -> canonicalize!(env.layer[v],site + 1),1:N-1)
+    pushright!(env)
+end
+
+function pushleft!(env::Environment{N}, tl::DenseMPOTensor{4}, tr::DenseMPOTensor{4}) where N
+    @assert (site = env.center[1] ) == env.center[2]
+    env.layer[end].ts[site-1:site] = map(adjoint,[tl,tr])
+    env.layer[end].center = env.center
+    map(v -> canonicalize!(env.layer[v],site - 1),1:N-1)
+    pushleft!(env)
+end
+
+function pushleft(A::AbstractMPO, B::AbstractMPO, EnvR::DenseRightEnvironmentTensor{2}, site::Int64)
+    return DenseRightEnvironmentTensor(contract(map(x -> x.ts[site],(A,B))..., EnvR.A))
+end
+
+function pushleft(A::AbstractMPO, B::AbstractMPO, C::AbstractMPO, EnvR::DenseRightEnvironmentTensor{3}, site::Int64)
+    return DenseRightEnvironmentTensor(contract(map(x -> x.ts[site],(A,B,C))..., EnvR.A))
+end
+
+function pushright(A::AbstractMPO, B::AbstractMPO, EnvL::DenseLeftEnvironmentTensor{2}, site::Int64)
+    return DenseLeftEnvironmentTensor(contract(map(x -> x.ts[site],(A,B))..., EnvL.A))
+end
+
+function pushright(A::AbstractMPO, B::AbstractMPO, C::AbstractMPO, EnvL::DenseLeftEnvironmentTensor{3}, site::Int64)
+    return DenseLeftEnvironmentTensor(contract(map(x -> x.ts[site],(A,B,C))..., EnvL.A))
+end
 
 function contract(A::MPSTensor{3},mpot::DenseMPOTensor{2},B::AdjointMPSTensor{3},EnvR::RightEnvironmentTensor{2})
-    @tensor tmp[-1;-2] ≔ A.A[-1,4,1] * mpot.t[3,4] * B.A[2,-2,3] * EnvR.t[1,2]
+    @tensor tmp[-1;-2] ≔ A.A[-1,4,1] * mpot.A[3,4] * B.A[2,-2,3] * EnvR.A[1,2]
     return RightEnvironmentTensor(tmp)
 end
 
 function contract(A::MPSTensor{3},mpot::DenseMPOTensor{3},B::AdjointMPSTensor{3},EnvR::RightEnvironmentTensor{2})
-    @tensor tmp[-1 -2;-3] ≔ A.A[-1,4,1] * mpot.t[3,-2,4] * B.A[2,-3,3] * EnvR.t[1,2]
+    @tensor tmp[-1 -2;-3] ≔ A.A[-1,4,1] * mpot.A[3,-2,4] * B.A[2,-3,3] * EnvR.A[1,2]
     return RightEnvironmentTensor(tmp)
 end
 
 function contract(A::MPSTensor{3},mpot::DenseMPOTensor{2},B::AdjointMPSTensor{3},EnvR::RightEnvironmentTensor{3})
-    @tensor tmp[-1 -2 ; -3] ≔ A.A[-1,4,1] * mpot.t[3,4] * B.A[2,-3,3] * EnvR.t[1,-2,2]
+    @tensor tmp[-1 -2 ; -3] ≔ A.A[-1,4,1] * mpot.A[3,4] * B.A[2,-3,3] * EnvR.A[1,-2,2]
     return RightEnvironmentTensor(tmp)
 end
 
 function contract(A::MPSTensor{3},mpot::DenseMPOTensor{3},B::AdjointMPSTensor{3},EnvR::RightEnvironmentTensor{3})
-    @tensor tmp[-1;-2] ≔ A.A[-1,4,1] * mpot.t[3,5,4] * B.A[2,-2,3] * EnvR.t[1,5,2]
+    @tensor tmp[-1;-2] ≔ A.A[-1,4,1] * mpot.A[3,5,4] * B.A[2,-2,3] * EnvR.A[1,5,2]
     return RightEnvironmentTensor(tmp)
 end
 
 # ==============
 
 function contract(A::MPSTensor{3},mpot::DenseMPOTensor{2},B::AdjointMPSTensor{3},EnvL::LeftEnvironmentTensor{2})
-    @tensor tmp[-1;-2] ≔ A.A[2,4,-2] * mpot.t[3,4] * B.A[-1,1,3] * EnvL.t[1,2]
+    @tensor tmp[-1;-2] ≔ A.A[2,4,-2] * mpot.A[3,4] * B.A[-1,1,3] * EnvL.A[1,2]
     return LeftEnvironmentTensor(tmp)
 end
 
 function contract(A::MPSTensor{3},mpot::DenseMPOTensor{3},B::AdjointMPSTensor{3},EnvL::LeftEnvironmentTensor{2})
-    @tensor tmp[-1;-2 -3] ≔ A.A[2,4,-3] * mpot.t[3,-2,4] * B.A[-1,1,3] * EnvL.t[1,2]
+    @tensor tmp[-1;-2 -3] ≔ A.A[2,4,-3] * mpot.A[3,-2,4] * B.A[-1,1,3] * EnvL.A[1,2]
     return LeftEnvironmentTensor(tmp)
 end
 
 function contract(A::MPSTensor{3},mpot::DenseMPOTensor{2},B::AdjointMPSTensor{3},EnvL::LeftEnvironmentTensor{3})
-    @tensor tmp[-1 -2 ; -3] ≔ A.A[2,4,-3] * mpot.t[3,4] * B.A[-1,1,3] * EnvL.t[1,-2,2]
+    @tensor tmp[-1 -2 ; -3] ≔ A.A[2,4,-3] * mpot.A[3,4] * B.A[-1,1,3] * EnvL.A[1,-2,2]
     return LeftEnvironmentTensor(tmp)
 end
 
 function contract(A::MPSTensor{3},mpot::DenseMPOTensor{3},B::AdjointMPSTensor{3},EnvL::LeftEnvironmentTensor{3})
-    @tensor tmp[-1;-2] ≔ A.A[2,4,-2] * mpot.t[3,5,4] * B.A[-1,1,3] * EnvL.t[1,5,2]
+    @tensor tmp[-1;-2] ≔ A.A[2,4,-2] * mpot.A[3,5,4] * B.A[-1,1,3] * EnvL.A[1,5,2]
     return LeftEnvironmentTensor(tmp)
 end
 

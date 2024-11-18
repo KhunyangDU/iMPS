@@ -27,7 +27,7 @@ end
 
 
 lsD = let
-    lsD = broadcast(Int64 ∘ round, vcat(0.5:0.5:4) .* 1000)
+    lsD = broadcast(Int64 ∘ round, vcat(0.5:0.5:8) .* 1000)
     repeat(lsD, inner=2)
 end
 @save "examples/benchmark/data/lsD_$(Lx)x$(Ly).jld2" lsD
@@ -39,7 +39,7 @@ end
 
 lsinfo = Vector(undef,length(lsD))
 for (i,D) in enumerate(lsD)
-    i < 12 && continue
+    i ≤ 16 && continue
     @show i
     tmpinfo = @benchmark DMRG2!($Env, $D;Nsweep = 4)
     @save "examples/benchmark/data/tmpinfo_$(i)_$(Lx)x$(Ly).jld2" tmpinfo

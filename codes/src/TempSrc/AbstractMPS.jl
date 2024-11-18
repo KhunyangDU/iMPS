@@ -2,26 +2,26 @@
 
 
 
-mutable struct MPS{L, T<:Union{Float64, ComplexF64}} <: DenseMPS{L,T}
+mutable struct DenseMPS{L, T<:Union{Float64, ComplexF64}} <: AbstractMPS
     ts::Vector{MPSTensor}
     center::Vector{Int64}
 
-    function MPS{L,T}(ts::Vector{MPSTensor},
+    function DenseMPS{L,T}(ts::Vector{MPSTensor},
         ct::Vector{Int64}) where {L,T}
         return new{L,T}(ts,ct)
     end
 
-    function MPS{L,T}(ts::Vector{MPSTensor}) where {L,T}
+    function DenseMPS{L,T}(ts::Vector{MPSTensor}) where {L,T}
         return new{L,T}(ts,[1,L])
     end
 
-    function MPS{L,T}(ts::Vector{AbstractTensorMap}) where {L,T}
+    function DenseMPS{L,T}(ts::Vector{AbstractTensorMap}) where {L,T}
         return new{L,T}([MPSTensor(t) for t in ts],[1,L])
     end
 
 end
 
-mutable struct AdjointMPS{L, T<:Union{Float64, ComplexF64}} <: DenseMPS{L,T}
+mutable struct AdjointMPS{L, T<:Union{Float64, ComplexF64}} <: AbstractMPS
     ts::Vector{AdjointMPSTensor}
     center::Vector{Int64}
 
@@ -44,12 +44,12 @@ function Base.length(::DenseMPS{L,T}) where {L,T}
     return L
 end
 
-function Base.adjoint(A::MPS{L,T}) where {L,T}
+function Base.adjoint(A::DenseMPS{L,T}) where {L,T}
     return AdjointMPS{L,T}(adjoint(A.ts), A.center)
 end
 
 """
-Generate rand MPS for initial state.
+Generate rand DenseMPS for initial state.
 """
 function randMPS(PhySpaces::Vector,AuxSpaces::Vector;
     type::Type = Float64,tailSpace::ElementarySpace = trivial(PhySpaces[1]))
@@ -60,7 +60,7 @@ function randMPS(PhySpaces::Vector,AuxSpaces::Vector;
         tmp[i] = MPSTensor(randn,AuxSpaces[i] ⊗ PhySpaces[i],AuxSpaces[i+1])
     end
 
-    obj = MPS{L,type}(tmp)
+    obj = DenseMPS{L,type}(tmp)
 
     canonicalize!(obj, L)
     canonicalize!(obj, 1)
@@ -75,7 +75,7 @@ function randMPS(PhySpace::IndexSpace,AuxSpaces::Vector;kwargs...)
 end
 
 
-function getPhySpace(t::MPS)
+function getPhySpace(t::DenseMPS)
     return getPhySpace(t.ts[1])
 end
 
@@ -87,12 +87,16 @@ function getPhySpace(t::MPSTensor{R}) where R
     end
 end
 
-function getAuxSpace(t::MPS)
+function getAuxSpace(t::DenseMPS)
     return getAuxSpace(t.ts[1])
 end
 
 function getAuxSpace(t::MPSTensor)
     return collect(codomain(t.A))[1], collect(domain(t.A))[end]
+end
+
+function getAuxSpace(t::AdjointMPSTensor)
+    return collect(domain(t.A))[1], collect(codomain(t.A))[end]
 end
 
 function trivial(::GradedSpace{I, D}) where {I, D}
@@ -104,11 +108,4 @@ function trivial(::ComplexSpace)
     return ℂ^1
 end
 
-function normalize!(obj::DenseMPS{L,T}) where {L,T}
-    @assert 1 == obj.center[1] == obj.center[2]
-    obj.ts[1] /= norm(obj.ts[1])
-end
 
-function normalize!(obj::AbstractMPSTensor)
-    obj.A = obj.A / norm(obj.A)
-end

@@ -3,13 +3,13 @@ using TensorKit
 include("../../src/iMPS.jl")
 include("model.jl")
 
-Lx = 4
-Ly = 4
+Lx = 8
+Ly = 1
 Latt = YCSqua(Lx,Ly)
 @save "examples/SU2Spin/data/Latt_$(Lx)x$(Ly).jld2" Latt
 
 J = 1
-H = Hamiltonian(Latt,J)
+H = Hamiltonian(Latt;J=J)
 
 D = 2^10
 ψ = let 

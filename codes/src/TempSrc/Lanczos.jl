@@ -8,16 +8,16 @@ function groundEig(O::SparseProjectiveHamiltonian{N}, LanczosLevel::Int64) where
 end
 
 function _initialMPS(O::SparseProjectiveHamiltonian{1})
-    codom = ⊗(map(x -> collect(domain(x))[end],[O.EnvL.envt[1].t, O.H.Mats[1].m[1,1].t])...)
-    dom = collect(codomain(O.EnvR.envt[1].t))[1]
+    codom = ⊗(map(x -> collect(domain(x))[end],[O.EnvL.envt[1].A, O.H.ts[1].m[1,1].A])...)
+    dom = collect(codomain(O.EnvR.envt[1].A))[1]
     tmp = CompositeMPSTensor(randn,codom,dom)
     normalize!(tmp)
     return tmp
 end
 
 function _initialMPS(O::SparseProjectiveHamiltonian{2})
-    codom = ⊗(map(x -> collect(domain(x))[end],[O.EnvL.envt[1].t, [O.H.Mats[i].m[1,1].t for i in 1:2]...])...)
-    dom = collect(codomain(O.EnvR.envt[1].t))[1]
+    codom = ⊗(map(x -> collect(domain(x))[end],[O.EnvL.envt[1].A, [O.H.ts[i].m[1,1].A for i in 1:2]...])...)
+    dom = collect(codomain(O.EnvR.envt[1].A))[1]
     tmp = CompositeMPSTensor(randn,codom,dom)
     normalize!(tmp)
     return tmp
