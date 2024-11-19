@@ -80,9 +80,9 @@ function TensorKit.tsvd(A::CompositeMPSTensor{2, R}; direction::Symbol=:center, 
     if direction == :center
         return U,S,V,ϵ
     elseif direction == :left 
-        return U*S,permute(V,(1,2),tuple(3:(R-1)...)),ϵ
+        return map(MPSTensor,(U*S,permute(V,(1,2),tuple(3:(R-1)...))))...,ϵ
     elseif direction == :right 
-        return U,permute(S*V,(1,2),tuple(3:(R-1)...)),ϵ
+        return map(MPSTensor,(U,permute(S*V,(1,2),tuple(3:(R-1)...))))...,ϵ
     end
 end
 
@@ -92,9 +92,9 @@ function TensorKit.tsvd(A::CompositeMPOTensor{2,6}; direction::Symbol=:center, k
     if direction == :center
         return permute(U,(1,2),(4,3)),S,permute(V,(2,1),(3,4)),ϵ
     elseif direction == :left 
-        return permute(U*S,(1,2),(4,3)),permute(V,(2,1),(3,4)),ϵ
+        return map(DenseMPOTensor,(permute(U*S,(1,2),(4,3)),permute(V,(2,1),(3,4))))...,ϵ
     elseif direction == :right 
-        return permute(U,(1,2),(4,3)),permute(S*V,(2,1),(3,4)),ϵ
+        return map(DenseMPOTensor,(permute(U,(1,2),(4,3)),permute(S*V,(2,1),(3,4))))...,ϵ
     end
 end
 
@@ -112,21 +112,36 @@ function canonicalize!(obj::Union{DenseMPO{L},DenseMPS{L}},sl::Int64,sr::Int64) 
         obj.center[2] -= 1
         ( obj.center[1] > obj.center[2] ) && ( obj.center[1] -= 1 )
     end
+    return obj
 end
 
-function canonicalize!(::SparseMPO{4}, ::Int64) end
+function canonicalize!(::SparseMPO, ::Int64) end
 
 function canonicalize!(obj::Union{DenseMPO{L},DenseMPS{L}},si::Int64) where {L}
     @assert 1 ≤ si ≤ L 
-    canonicalize!(obj,si,si)
+    return canonicalize!(obj,si,si)
 end
 
 function normalize!(obj::Union{DenseMPO{L},DenseMPS{L}}) where {L}
     @assert 1 == obj.center[1] == obj.center[2]
-    normalize!(obj.ts[1])
+    return normalize!(obj.ts[1])
 end
 
 function normalize!(obj::Union{AbstractMPOTensor,AbstractMPSTensor})
-    obj.A = obj.A / norm(obj.A)
+    tmp = norm(obj.A)
+    obj.A = obj.A / tmp
+    return tmp
 end
 
+function normalize!(obj::Union{DenseMPOTensor,MPSTensor})
+    tmp = norm(obj.A)
+    obj.A = obj.A / tmp
+    return tmp
+end
+
+function normalize!(obj::SparseCompositeMPOTensor{N,R}) where {N,R}
+    @assert (center = obj.center[1]) == obj.center[2]
+    tmp = norm(obj.A)
+    obj.A[center] /= tmp
+    return tmp
+end

@@ -21,11 +21,11 @@ function contract(El::LeftEnvironmentTensor{3},A::MPSTensor{3}, mpo::DenseMPOTen
 end
 function contract(El::LeftCompositeEnvironmentTensor{2,3},Er::RightEnvironmentTensor{2})
     @tensor tmp[-1 -2;-3] ≔ El.A[-1,-2,1] * Er.A[1,-3]
-    return tmp
+    return MPSTensor(tmp)
 end
 function contract(El::LeftCompositeEnvironmentTensor{2,4},Er::RightEnvironmentTensor{3})
     @tensor tmp[-1 -2;-3] ≔ El.A[-1,-2,2,1] * Er.A[1,2,-3]
-    return tmp
+    return MPSTensor(tmp)
 end
 """
 Contract the AbstractEnvironmentTensor with AbstractMPOTensor / AbstractEnvironmentTensor
@@ -60,10 +60,10 @@ function contract(El::LeftCompositeEnvironmentTensor{3,4}, mpo::DenseMPOTensor{2
     return LeftCompositeEnvironmentTensor(tmp)
 end
 function contract(El::LeftCompositeEnvironmentTensor{3,4}, Er::RightEnvironmentTensor{2})
-    return El.A*Er.A
+    return CompositeMPSTensor(El.A*Er.A)
 end
 function contract(El::LeftCompositeEnvironmentTensor{3,5}, Er::RightEnvironmentTensor{3})
-    return El.A*permute(Er.A,(2,1),(3,))
+    return CompositeMPSTensor(El.A*permute(Er.A,(2,1),(3,)))
 end
 
 function contract(A::DenseMPOTensor{4}, B::AdjointMPOTensor{4}, EnvR::RightEnvironmentTensor{2})
@@ -166,6 +166,7 @@ function contract(EnvL::SparseLeftEnvironmentTensor, A::DenseMPOTensor{4}, B::De
     @assert M₁ == N₂
     tmp = nothing
     for i in N₁, j in M₁, k in M₂
+        isnothing(C.m[i,j]) | isnothing(D.m[j,k]) && continue
         tmp1 = contract(EnvL.A[i], A, C.m[i,j])
         tmp2 = contract(B, D.m[j,k], EnvR.A[k])
         if isnothing(tmp)
@@ -174,7 +175,7 @@ function contract(EnvL::SparseLeftEnvironmentTensor, A::DenseMPOTensor{4}, B::De
             tmp += contract(tmp1, tmp2)
         end
     end
-    return CompositeMPOTensor(tmp)
+    return tmp
 end
 
 function contract(El::LeftEnvironmentTensor{2},A::DenseMPOTensor{4}, B::DenseMPOTensor{2})
@@ -204,12 +205,12 @@ end
 
 function contract(El::LeftCompositeEnvironmentTensor{2, 4}, Er::RightCompositeEnvironmentTensor{2, 4})
     @tensor tmp[-1 -2 -3;-4 -5 -6] ≔ El.A[-3,-2,1,-6] * Er.A[1,-1,-4,-5]
-    return tmp
+    return CompositeMPOTensor(tmp)
 end
 
 function contract(El::LeftCompositeEnvironmentTensor{2, 5}, Er::RightCompositeEnvironmentTensor{2, 5})
     @tensor tmp[-1 -2 -3;-4 -5 -6] ≔ El.A[-3,-2,2,1,-6] * Er.A[1,2,-1,-4,-5]
-    return tmp
+    return CompositeMPOTensor(tmp)
 end
 
 function contract(EnvL::DenseLeftEnvironmentTensor, A::DenseMPOTensor, B::DenseMPOTensor, EnvR::DenseRightEnvironmentTensor)
@@ -241,5 +242,60 @@ end
 
 function contract(EnvL::LeftEnvironmentTensor{2}, A::DenseMPOTensor{4}, B::AdjointMPOTensor{4}, EnvR::RightEnvironmentTensor{2})
     return @tensor EnvL.A[2,1] * A.A[3,1,5,4] * B.A[6,4,3,2] * EnvR.A[5,6]
+end
+
+function contract(EnvL::LeftEnvironmentTensor{3}, A::DenseMPOTensor{4}, B::DenseMPOTensor{3})
+    @tensor tmp[-1 -2;-3 -4] ≔ EnvL.A[-1,2,1] * A.A[3,1,-3,-4] * B.A[-2,2,3]
+    return LeftCompositeEnvironmentTensor(tmp)
+end
+
+function contract(EnvL::LeftCompositeEnvironmentTensor{2, 4}, EnvR::RightEnvironmentTensor{2})
+    @tensor tmp[-1 -2;-3 -4] ≔ EnvL.A[-2,-1,1,-4] * EnvR.A[1,-3]
+    return DenseMPOTensor(tmp)
+end
+
+function contract(EnvL::LeftCompositeEnvironmentTensor{2, 5}, EnvR::RightEnvironmentTensor{3})
+    @tensor tmp[-1 -2;-3 -4] ≔ EnvL.A[-2,-1,2,1,-4] * EnvR.A[1,2,-3]
+    return DenseMPOTensor(tmp)
+end
+
+function contract(EnvL::LeftEnvironmentTensor{2}, A::CompositeMPOTensor{2, 6}, B::DenseMPOTensor{3})
+    @tensor tmp[-1 -2 -3;-4 -5 -6 -7] ≔ EnvL.A[-1,1] * A.A[-3,2,1,-5,-6,-7] * B.A[-2,-4,2]
+    return LeftCompositeEnvironmentTensor(tmp)
+end
+
+function contract(EnvL::LeftEnvironmentTensor{3}, A::CompositeMPOTensor{2, 6}, B::DenseMPOTensor{3})
+    @tensor tmp[-1 -2 -3;-4 -5 -6] ≔ EnvL.A[-1,2,1] * A.A[-3,3,1,-4,-5,-6] * B.A[-2,2,3]
+    return LeftCompositeEnvironmentTensor(tmp)
+end
+
+function contract(EnvL::LeftEnvironmentTensor{2}, A::CompositeMPOTensor{2, 6}, B::DenseMPOTensor{2})
+    @tensor tmp[-1 -2 -3;-4 -5 -6] ≔ EnvL.A[-1,1] * A.A[-3,2,1,-4,-5,-6] * B.A[-2,2]
+    return LeftCompositeEnvironmentTensor(tmp)
+end
+
+function contract(EnvL::LeftCompositeEnvironmentTensor{3, 7}, A::DenseMPOTensor{3})
+    @tensor tmp[-1 -2 -3;-4 -5 -6] ≔ EnvL.A[-1,-2,2,1,-4,-5,-6] * A.A[-3,1,2]
+    return LeftCompositeEnvironmentTensor(tmp)
+end
+
+function contract(EnvL::LeftCompositeEnvironmentTensor{3, 6}, A::DenseMPOTensor{3})
+    @tensor tmp[-1 -2 -3;-4 -5 -6 -7] ≔ EnvL.A[-1,-2,1,-5,-6,-7] * A.A[-3,-4,1]
+    return LeftCompositeEnvironmentTensor(tmp)
+end
+
+function contract(EnvL::LeftCompositeEnvironmentTensor{3, 6}, A::DenseMPOTensor{2})
+    @tensor tmp[-1 -2 -3;-4 -5 -6] ≔ EnvL.A[-1,-2,1,-4,-5,-6] * A.A[-3,1]
+    return LeftCompositeEnvironmentTensor(tmp)
+end
+
+function contract(EnvL::LeftCompositeEnvironmentTensor{3, 6}, EnvR::RightEnvironmentTensor{2})
+    @tensor tmp[-1 -2 -3;-4 -5 -6] ≔ EnvL.A[-3,-2,-1,1,-5,-6] * EnvR.A[1,-4]
+    return CompositeMPOTensor(tmp)
+end
+
+function contract(EnvL::LeftCompositeEnvironmentTensor{3, 7}, EnvR::RightEnvironmentTensor{3})
+    @tensor tmp[-1 -2 -3;-4 -5 -6] ≔ EnvL.A[-3,-2,-1,2,1,-5,-6] * EnvR.A[1,2,-4]
+    return CompositeMPOTensor(tmp)
 end
 

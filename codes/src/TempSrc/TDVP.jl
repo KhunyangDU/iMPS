@@ -1,67 +1,26 @@
 
 
-function TDVP2!(Env::Environment{3}, t::Number, Nt::Int64, D_MPS::Int64;
-    LanczosLevel::Int64=15, TruncErr::Number=1e-3)
+function TDVP2!(Env::Environment{3}, lst::AbstractVector, D_MPS::Int64;
+    LanczosLevel::Int64=15, TruncErr::Number=1e-4)
 
-    H = Env.layer[2]
-    L = Env.L
-
-    lsψ = Vector{AbstractMPS}(undef,1)
-    lst = Vector{Float64}(undef,1)
-    τ = t/(Nt-1)
-
-    lsψ[1] = deepcopy(Env.layer[1])
-    lst[1] = 0.0
+    lsobj = Vector(undef,1)
+    lsobj[1] = deepcopy(Env.layer[1])
 
     totaltruncerror = 0
-    temptruncerr = 0
-    for i in 2:Nt
+    
+    for i in 2:length(lst)
+        τ = lst[i]-lst[i-1]
 
         @time "sweep $i finished, max truncation error = $(totaltruncerror)" begin
-            println(">>>>>> Right >>>>>>")
-            for site in 1:L-1
-                tmp = evolve!(composite(Env.layer[1].ts[site:site+1]...), projright2(H,Env,site), τ, LanczosLevel)
-                
-                tl, tr, temptruncerr = tsvd(CompositeMPSTensor(tmp); direction=:right,trunc = truncdim(D_MPS))
-                tl, tr = map(MPSTensor,[tl, tr])
-                
-                Env.layer[1].ts[site] = tl
-                Env.layer[3].ts[site] = adjoint(Env.layer[1].ts[site])
-                
-                pushright!(Env)
-                evolve!(tr, proj1(H,Env,site+1), -τ, LanczosLevel)
-                
-                Env.layer[1].ts[site+1] = tr
-                Env.layer[3].ts[site+1] = adjoint(Env.layer[1].ts[site+1])
-                
-                totaltruncerror = max(totaltruncerror,temptruncerr)
-            end
-            println("<<<<<< Left <<<<<<")
-            for site in L:-1:2
-                tmp = evolve!(composite(Env.layer[1].ts[site-1:site]...), projleft2(H,Env,site), τ, LanczosLevel)
-                
-                tl, tr, temptruncerr = tsvd(CompositeMPSTensor(tmp); direction=:left,trunc = truncdim(D_MPS))
-                tl, tr = map(MPSTensor,[tl, tr])
-
-                Env.layer[1].ts[site] = tr
-                Env.layer[3].ts[site] = adjoint(Env.layer[1].ts[site])
-
-                pushleft!(Env)
-                evolve!(tl, proj1(H,Env,site-1), -τ, LanczosLevel)
-
-                Env.layer[1].ts[site-1] = tl
-                Env.layer[3].ts[site-1] = adjoint(Env.layer[1].ts[site-1])
-
-                totaltruncerror = max(totaltruncerror,temptruncerr)
-            end
+            totaltruncerror = TDVP2!(Env, τ, D_MPS, totaltruncerror, LanczosLevel)
         end
+
         totaltruncerror > TruncErr && break
-        push!(lsψ,deepcopy(Env.layer[1]))
-        push!(lst,lst[end] + τ)
-        GC.gc()
+        push!(lsobj,deepcopy(Env.layer[1]))
+        
     end
 
-    return lsψ, lst
+    return lsobj
 end
 
 function TDVP2!(ψ::DenseMPS, H::SparseMPO, t::Number, Nt::Int64, D_MPS::Int64;
@@ -70,15 +29,69 @@ function TDVP2!(ψ::DenseMPS, H::SparseMPO, t::Number, Nt::Int64, D_MPS::Int64;
         Env = Environment([ψ,H,adjoint(ψ)])
         initialize!(Env)
     end
-    lsψ, lst = TDVP2!(Env,t, Nt, D_MPS;kwargs...)
+    lst = collect(range(0,t,Nt))
+    lsψ = TDVP2!(Env, lst, D_MPS;kwargs...)
     return lsψ, lst
+end
+
+function TDVP2!(Env::Environment{3}, τ::Number, D::Int64, totaltruncerror::Number, LanczosLevel::Int64)
+    L = Env.L
+    temptruncerr = 0
+    println(">>>>>> Right >>>>>>")
+    for site in 1:L-1
+        tmp = evolve!(composite(Env.layer[1].ts[site:site+1]...), projright2(Env,site), τ, LanczosLevel)
+        tl, tr, temptruncerr = tsvd(tmp; direction=:right,trunc = truncdim(D))
+        pushright!(Env, tl, tr, τ, LanczosLevel)
+        totaltruncerror = max(totaltruncerror,temptruncerr)
+    end
+    evolve!(Env.layer[1].ts[L], proj1(Env,L), τ, LanczosLevel)
+    println("<<<<<< Left <<<<<<")
+    for site in L:-1:2
+        tmp = evolve!(composite(Env.layer[1].ts[site-1:site]...), projleft2(Env,site), τ, LanczosLevel)
+        tl, tr, temptruncerr = tsvd(tmp; direction=:left,trunc = truncdim(D))
+        pushleft!(Env, tl, tr, τ, LanczosLevel)
+        totaltruncerror = max(totaltruncerror,temptruncerr)
+    end
+    evolve!(Env.layer[1].ts[1], proj1(Env,1), τ, LanczosLevel)
+    GC.gc()
+    return totaltruncerror
+end
+
+function pushright!(Env::Environment{3}, tl::Union{AbstractMPSTensor, AbstractMPOTensor}, tr::Union{AbstractMPSTensor, AbstractMPOTensor}, τ::Number, LanczosLevel::Int64)
+    @assert (site = Env.center[1] ) == Env.center[2]
+    Env.layer[1].ts[site] = tl
+    Env.layer[3].ts[site] = adjoint(Env.layer[1].ts[site])
+    pushright!(Env)
+    evolve!(tr, proj1(Env,site+1), -τ, LanczosLevel)
+    Env.layer[1].ts[site+1] = tr
+    Env.layer[3].ts[site+1] = adjoint(Env.layer[1].ts[site+1])
+end
+
+function pushleft!(Env::Environment{3}, tl::Union{AbstractMPSTensor, AbstractMPOTensor}, tr::Union{AbstractMPSTensor, AbstractMPOTensor}, τ::Number, LanczosLevel::Int64)
+    @assert (site = Env.center[1] ) == Env.center[2]
+    Env.layer[1].ts[site] = tr
+    Env.layer[3].ts[site] = adjoint(Env.layer[1].ts[site])
+    pushleft!(Env)
+    evolve!(tl, proj1(Env,site-1), -τ, LanczosLevel)
+    Env.layer[1].ts[site-1] = tl
+    Env.layer[3].ts[site-1] = adjoint(Env.layer[1].ts[site-1])
 end
 
 
 function evolve!(
-    obj::AbstractMPSTensor,
+    obj::Union{AbstractMPSTensor, AbstractMPOTensor, DenseMPO},
     O::SparseProjectiveHamiltonian{N}, τ::Number, LanczosLevel::Int64) where N
+    tmp = normalize!(obj)
     T, Q = Lanczos(O,obj,LanczosLevel)
-    obj.A = sum(exp(-1im*τ*T)[:,1] .* map(x->x.A, Q))
+    obj.A = sum(tmp * exp(-1im*τ*T)[:,1] .* map(x->x.A, Q))
+    return obj
 end
 
+function tanTRG2!(ρ::DenseMPO, H::SparseMPO, lsβ::AbstractVector, D::Int64;kwargs...)
+    @time "Initialize Environment" begin
+        Env = Environment([ρ,H,ρ'])
+        initialize!(Env)
+    end
+    lsρ = TDVP2!(Env,lsβ .* (-1im), D;kwargs...)
+    return lsρ
+end

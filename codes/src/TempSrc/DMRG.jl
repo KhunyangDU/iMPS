@@ -16,16 +16,16 @@ function DMRG2!(Env::Environment{3}, D_MPS::Int64;
             Eg = 0
             println(">>>>>> Right >>>>>>")
             for site in 1:L-1
-                Eg,Ev = groundEig(projright2(H,Env,site),LanczosLevel)
+                Eg,Ev = groundEig(projright2(Env,site),LanczosLevel)
                 tl, tr, temptruncerr = tsvd(Ev; direction=:right,trunc = truncdim(D_MPS))
-                pushright!(Env,map(MPSTensor, [tl, tr])...)
+                pushright!(Env,tl, tr)
                 totaltruncerror = max(totaltruncerror,temptruncerr)
             end
             println("<<<<<< Left <<<<<<")
             for site in L:-1:2
-                Eg,Ev = groundEig(projleft2(H,Env,site),LanczosLevel)
+                Eg,Ev = groundEig(projleft2(Env,site),LanczosLevel)
                 tl, tr, temptruncerr = tsvd(Ev; direction=:left,trunc = truncdim(D_MPS))
-                pushleft!(Env,map(MPSTensor, [tl, tr])...)
+                pushleft!(Env,tl, tr)
                 totaltruncerror = max(totaltruncerror,temptruncerr)
             end
             push!(lsE, Eg)

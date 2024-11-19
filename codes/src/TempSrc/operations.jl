@@ -32,14 +32,14 @@ function mul!(C::DenseMPO, A::Union{DenseMPO,SparseMPO}, B::Union{DenseMPO,Spars
             tl, tr, temptruncerr = tsvd(let 
                 axpby!(α, β, map(z -> contract(z.envs[site], vcat(map(u -> z.layer[u].ts[site:site+1],1:length(z.layer)-1)...)..., z.envs[site+2]),[EnvAB,EnvC])...)
             end; direction=:right,trunc = truncdim(D_MPO))
-            map(z -> pushright!(z,map(DenseMPOTensor, [tl, tr])...),[EnvAB,EnvC])
+            map(z -> pushright!(z, tl, tr),[EnvAB,EnvC])
             totaltruncerror = max(totaltruncerror,temptruncerr)
         end
         for site in L:-1:2
             tl, tr, temptruncerr = tsvd(let 
                 axpby!(α, β,map(z -> contract(z.envs[site-1], vcat(map(u -> z.layer[u].ts[site-1:site],1:length(z.layer)-1)...)..., z.envs[site+1]),[EnvAB,EnvC])...)
             end; direction=:left,trunc = truncdim(D_MPO))
-            map(z -> pushleft!(z,map(DenseMPOTensor, [tl, tr])...),[EnvAB,EnvC])
+            map(z -> pushleft!(z, tl, tr),[EnvAB,EnvC])
             totaltruncerror = max(totaltruncerror,temptruncerr)
         end
 #=         @time "sweep $i finished, max truncation error = $(totaltruncerror)" begin
@@ -73,7 +73,7 @@ D_MPO: MPO bond dimension. Default is the maximum D of x, y.
 Nsweep: times of variational calculation (sweep). Default is 2.
 
 """
-function axpy!(α::Number, x::DenseMPO, y::DenseMPO;kwargs...)
+function axpy!(α::Number, x::DenseMPO{L}, y::DenseMPO{L};kwargs...) where L
     D_MPO = get(kwargs, :D_MPO, max(map(y -> maximum(vcat(collect.(map(size, y.ts))...)),[x,y])...))
     Nsweep = get(kwargs, :D_MPO, 3)
 
@@ -95,14 +95,14 @@ function axpy!(α::Number, x::DenseMPO, y::DenseMPO;kwargs...)
             tl, tr, temptruncerr = tsvd(let 
                 axpy!(α,map(z -> contract(z.envs[site], z.layer[1].ts[site:site+1]..., z.envs[site+2]),[Envx,Envy])...)
             end; direction=:right,trunc = truncdim(D_MPO))
-            map(z -> pushright!(z,map(DenseMPOTensor, [tl, tr])...),[Envx,Envy])
+            map(z -> pushright!(z, tl, tr),[Envx,Envy])
             totaltruncerror = max(totaltruncerror,temptruncerr)
         end
         for site in L:-1:2
             tl, tr, temptruncerr = tsvd(let 
                 axpy!(α,map(z -> contract(z.envs[site-1], z.layer[1].ts[site-1:site]..., z.envs[site+1]),[Envx,Envy])...)
             end; direction=:left,trunc = truncdim(D_MPO))
-            map(z -> pushleft!(z,map(DenseMPOTensor, [tl, tr])...),[Envx,Envy])
+            map(z -> pushleft!(z, tl, tr),[Envx,Envy])
             totaltruncerror = max(totaltruncerror,temptruncerr)
         end
         #= @time "sweep $i finished, max truncation error = $(totaltruncerror)" begin
@@ -136,6 +136,11 @@ end
 function axpby!(α::Number, β::Number, x::CompositeMPOTensor{N₁,R₁}, y::CompositeMPOTensor{N₂,R₂}) where {N₁,R₁,N₂,R₂}
     @assert N₁ == N₂ && R₁ == R₂
     y.A = x.A * α + y.A * β
+    return y
+end
+
+function axpby!(::Number, β::Number, ::Nothing, y::CompositeMPOTensor)
+    y.A = y.A * β
     return y
 end
 

@@ -156,6 +156,31 @@ mutable struct AdjointCompositeMPSTensor{N, R} <: AbstractMPSTensor{R}
     end
 end
 
+
+abstract type AbstractMPOTensor end
+
+mutable struct DenseMPOTensor{R} <: AbstractMPOTensor
+    A::AbstractTensorMap
+
+    function DenseMPOTensor(t::AbstractTensorMap)
+        return new{rank(t)}(t)
+    end
+end
+
+
+mutable struct AdjointMPOTensor{R} <: AbstractMPOTensor
+    A::AbstractTensorMap
+
+    function AdjointMPOTensor(t::AbstractTensorMap)
+        return new{rank(t)}(t)
+    end
+end
+
+function composite(A::DenseMPOTensor{4}, B::DenseMPOTensor{4})
+    @tensor tmp[-1 -2 -3;-4 -5 -6] ≔ A.A[-2,-3,1,-6] * B.A[-1,1,-4,-5]
+    return CompositeMPOTensor(tmp)
+end
+
 function Base.adjoint(t::CompositeMPSTensor)
     return AdjointCompositeMPSTensor(t.A')
 end
@@ -192,36 +217,18 @@ function Base.:/(A::CompositeMPSTensor, n::Number)
     return (1/n) * A
 end
 
-function Base.iterate(t::AbstractMPSTensor)
+function Base.iterate(t::Union{AbstractMPSTensor, AbstractMPOTensor})
     return (t,nothing)
 end
 
-function Base.iterate(::AbstractMPSTensor,::Nothing)
+function Base.iterate(::Union{AbstractMPSTensor, AbstractMPOTensor},::Nothing)
     return nothing
 end
 
-function TensorKit.norm(A::CompositeMPSTensor)
+function TensorKit.norm(A::Union{AbstractMPSTensor, AbstractMPOTensor})
     return norm(A.A)
 end
 
-abstract type AbstractMPOTensor end
-
-mutable struct DenseMPOTensor{R} <: AbstractMPOTensor
-    A::AbstractTensorMap
-
-    function DenseMPOTensor(t::AbstractTensorMap)
-        return new{rank(t)}(t)
-    end
-end
-
-
-mutable struct AdjointMPOTensor{R} <: AbstractMPOTensor
-    A::AbstractTensorMap
-
-    function AdjointMPOTensor(t::AbstractTensorMap)
-        return new{rank(t)}(t)
-    end
-end
 
 function getAuxSpace(t::DenseMPOTensor{4})
     return collect(codomain(t.A))[2], collect(domain(t.A))[1]
@@ -260,6 +267,21 @@ mutable struct CompositeMPOTensor{N, R} <: AbstractMPOTensor
         return new{length(codomain(A))-1, rank(A)}(A)
     end
 end
+
+mutable struct AdjointCompositeMPOTensor{N, R} <: AbstractMPOTensor
+    A::AbstractTensorMap
+
+    function AdjointCompositeMPOTensor(A::AbstractTensorMap)
+        return new{length(domain(A))-1, rank(A)}(A)
+    end
+
+    function AdjointCompositeMPOTensor(fc::Function,codom,dom)
+        A = TensorMap(fc,codom,dom)
+        return new{length(domain(A))-1, rank(A)}(A)
+    end
+end
+
+
 
 mutable struct SparseMPOTensor{N,M} <: AbstractMPOTensor
     m::Matrix{Union{Nothing,DenseMPOTensor}}

@@ -208,3 +208,53 @@ function RandDenseMPO(L::Int64, PhySpace::ElementarySpace = ℂ^1, AuxSpace::Ele
 end
 
 
+function Base.adjoint(t::CompositeMPOTensor)
+    return AdjointCompositeMPOTensor(t.A')
+end
+
+function Base.adjoint(ts::Vector{CompositeMPOTensor})
+    return convert(Vector{AdjointCompositeMPOTensor},[AdjointCompositeMPOTensor(t.A') for t in ts])
+end
+
+function Base.adjoint(t::AdjointCompositeMPOTensor)
+    return CompositeMPOTensor(t.A')
+end
+
+function Base.adjoint(ts::Vector{AdjointCompositeMPOTensor})
+    return convert(Vector{CompositeMPOTensor},[CompositeMPOTensor(t.A') for t in ts])
+end
+
+function Base.:*(A::CompositeMPOTensor{2,6}, B::AdjointCompositeMPOTensor{2,6})
+    return  @tensor A.A[1,2,3,4,5,6] * B.A[4,5,6,1,2,3]
+end
+
+function Base.:*(A::DenseMPOTensor{4}, B::AdjointMPOTensor{4})
+    return  @tensor A.A[1,2,3,4] * B.A[3,4,1,2]
+end
+
+function Base.:*(α::Number, A::CompositeMPOTensor)
+    return  CompositeMPOTensor(α*A.A)
+end
+
+function Base.:*(α::Number, A::DenseMPOTensor)
+    return  DenseMPOTensor(α*A.A)
+end
+
+function Base.:/(A::AbstractMPOTensor, α::Number)
+    return  (1/α) * A
+end
+
+function Base.:+(A::CompositeMPOTensor{N₁, R₁}, B::CompositeMPOTensor{N₂, R₂}) where {N₁, N₂, R₁, R₂}
+    @assert N₁ == N₂ && R₁ == R₂
+    return CompositeMPOTensor(A.A + B.A)
+end
+
+function Base.:+(A::DenseMPOTensor{R₁}, B::DenseMPOTensor{R₂}) where {R₁, R₂}
+    @assert R₁ == R₂
+    return DenseMPOTensor(A.A + B.A)
+end
+
+function Base.:-(A::AbstractMPOTensor, B::AbstractMPOTensor)
+    return A + (-1) * B
+end
+

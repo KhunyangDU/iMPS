@@ -5,13 +5,13 @@ function dot(A,B)
     return sum(A .* B)
 end
 
-Lx = 16
+Lx = 8
 Ly = 1
 Latt = load("../codes/examples/U1Spin/data/Latt_$(Lx)x$(Ly).jld2")["Latt"]
 
-D = 2^6
+D = 2^4
 T = 2
-Nt = 40
+Nt = 10
 
 lst = load("../codes/examples/U1Spin/data/lst_$(Lx)x$(Ly)_$(D)_$(round(T;digits=3))_$(Nt)_AFM.jld2")["lst"]
 lsObs = load("../codes/examples/U1Spin/data/lsObs_$(Lx)x$(Ly)_$(D)_$(round(T;digits=3))_$(Nt)_AFM.jld2")["lsObs"]

@@ -23,9 +23,9 @@ function _initialMPS(O::SparseProjectiveHamiltonian{2})
     return tmp
 end
 
-function Lanczos(O::SparseProjectiveHamiltonian{N}, q1::AbstractMPSTensor,
+function Lanczos(O::SparseProjectiveHamiltonian{N}, q1::Union{AbstractMPSTensor, AbstractMPOTensor, DenseMPO},
     LanczosLevel::Int64;kwargs...) where N
-    Q = Vector{AbstractMPSTensor}(undef, LanczosLevel)
+    Q = Vector(undef, LanczosLevel)
     α = zeros(LanczosLevel)
     β = zeros(LanczosLevel-1)
 

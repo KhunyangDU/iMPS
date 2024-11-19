@@ -16,21 +16,7 @@ end
 t = 1
 U = 0
 
-H = let 
-    Root = InteractionTreeNode()
-    LocalSpace = U₁SU₂Fermion
-
-    for i in 1:size(Latt)
-        addIntr!(Root,LocalSpace.nd,i,"nd",U,nothing)
-    end
-    
-    for pair in neighbor(Latt)
-        addIntr!(Root,LocalSpace.F⁺F,pair,("F⁺","F"),-t,LocalSpace.Z)
-        addIntr!(Root,LocalSpace.FF⁺,pair,("F","F⁺"),t,LocalSpace.Z)
-    end
-
-    AutomataSparseMPO(InteractionTree(Root),size(Latt))
-end
+H = Hamiltonian(Latt;U=U)
 
 D = 2^6
 

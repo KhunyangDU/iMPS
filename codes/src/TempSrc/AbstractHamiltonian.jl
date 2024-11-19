@@ -13,15 +13,15 @@ mutable struct SparseProjectiveHamiltonian{N} <: AbstractProjectiveHamiltonian
     end
 end
 
-function proj1(H::SparseMPO,env::Environment,site::Int64)
-    return SparseProjectiveHamiltonian(env.envs[site:site+1]...,SparseMPO(H.ts[site]))
+function proj1(env::Environment{3},site::Int64)
+    return SparseProjectiveHamiltonian(env.envs[site:site+1]...,SparseMPO(env.layer[2].ts[site]))
 end
 
-function projright2(H::SparseMPO,env::Environment,site::Int64)
-    return SparseProjectiveHamiltonian(env.envs[[site,site+2]]...,SparseMPO(H.ts[site:site+1]))
+function projright2(env::Environment{3},site::Int64)
+    return SparseProjectiveHamiltonian(env.envs[[site,site+2]]...,SparseMPO(env.layer[2].ts[site:site+1]))
 end
 
-function projleft2(H::SparseMPO,env::Environment,site::Int64)
-    return SparseProjectiveHamiltonian(env.envs[[site-1,site+1]]...,SparseMPO(H.ts[site-1:site]))
+function projleft2(env::Environment{3},site::Int64)
+    return SparseProjectiveHamiltonian(env.envs[[site-1,site+1]]...,SparseMPO(env.layer[2].ts[site-1:site]))
 end
 

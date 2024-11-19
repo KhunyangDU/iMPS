@@ -1,10 +1,10 @@
-function action(O::SparseProjectiveHamiltonian{N},obj::AbstractMPSTensor{R}) where {N,R}
+#= function action(O::SparseProjectiveHamiltonian{N},obj::AbstractMPSTensor{R}) where {N,R}
     if (N,R) == (1,3)
         return action1(O,obj)
     elseif (N,R) == (2,4) 
         return action2(O,obj)
     end
-end
+end =#
 
 #= function action1(O::SparseProjectiveHamiltonian{1},obj::MPSTensor{3})
     N,M = O.H.D[1]
@@ -71,34 +71,48 @@ end =#
     return CompositeMPSTensor(ref)
 end =#
 
-function action1(O::SparseProjectiveHamiltonian{1},obj::MPSTensor{3})
+function action(O::SparseProjectiveHamiltonian{1}, obj::Union{MPSTensor{3},DenseMPOTensor{4}})
     N,M = O.H.D[1]
     ts = obj.A * 0
+    ts = nothing
 
     for i in 1:N, j in 1:M
         isnothing(O.H.ts[1].m[i,j]) && continue
         tmp = contract(O.EnvL.A[i], obj, O.H.ts[1].m[i,j])
-        ts += contract(tmp,O.EnvR.A[j])
+        if isnothing(ts)
+            ts = contract(tmp,O.EnvR.A[j])
+        else
+            ts += contract(tmp,O.EnvR.A[j])
+        end
     end
 
-    return MPSTensor(ts)
+    return ts
 end
 
-function action2(O::SparseProjectiveHamiltonian{2},obj::CompositeMPSTensor{2,4})
+function action(O::SparseProjectiveHamiltonian{2}, obj::Union{CompositeMPSTensor{2,4}, CompositeMPOTensor{2, 6}, SparseCompositeMPOTensor{2, 4}, DenseMPO})
     N,M1 = O.H.D[1]
     M2,R = O.H.D[2]
     @assert M1 == M2
 
-    ts = obj.A * 0
+    ts = nothing
 
     for i in 1:N, j in 1:M1, k in 1:R
         isnothing(O.H.ts[1].m[i,j]) | isnothing(O.H.ts[2].m[j,k]) && continue
+#=         if isnothing(ts)
+            ts = contract(O.EnvL.A[i], obj, O.H.ts[1].m[i,j], O.H.ts[2].m[j,k], O.EnvR.A[k])
+        else
+            axpy!(1,contract(O.EnvL.A[i], obj, O.H.ts[1].m[i,j], O.H.ts[2].m[j,k], O.EnvR.A[k]),ts)
+        end =#
         tmp1 = contract(O.EnvL.A[i], obj, O.H.ts[1].m[i,j])
         tmp2 = contract(tmp1, O.H.ts[2].m[j,k])
-        ts += contract(tmp2,O.EnvR.A[k])
+        if isnothing(ts)
+            ts = contract(tmp2, O.EnvR.A[k])
+        else
+            ts += contract(tmp2, O.EnvR.A[k])
+        end
     end
 
-    return CompositeMPSTensor(ts)
+    return ts
 end
 
 function contract(El::LeftCompositeEnvironmentTensor{3,5}, mpo::DenseMPOTensor{2})

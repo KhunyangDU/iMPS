@@ -37,10 +37,10 @@ D = 2^4
 end
 
 T = 2
-Nt = 40
+Nt = 10
 
 lsψ, lst = TDVP2!(ψ, H, T, Nt, D)
-
+@show lst
 Obs = let 
     Obs = MPSObservable()
     LocalSpace = U₁Spin

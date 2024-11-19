@@ -82,7 +82,7 @@ end
 
 function scalar(Env::Environment{3})
     @assert Env.center[1] == Env.center[2]
-    _inproduct(action(proj1(Env.layer[2], Env, Env.center[1]), Env.layer[1].ts[Env.center[1]]), Env.layer[3].ts[Env.center[1]])
+    _inproduct(action(proj1(Env, Env.center[1]), Env.layer[1].ts[Env.center[1]]), Env.layer[3].ts[Env.center[1]])
 end
 
 function _inproduct(A::MPSTensor{3}, B::MPSTensor{3})
