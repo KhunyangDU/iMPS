@@ -69,7 +69,7 @@ end
 
 
 mutable struct SparseEnvironmentTensor <: AbstractEnvironmentTensor
-    envt::Vector{AbstractEnvironmentTensor}
+    A::Vector{AbstractEnvironmentTensor}
     D::Int64
 
     function SparseEnvironmentTensor(t::Vector{AbstractEnvironmentTensor},D::Int64)
@@ -88,7 +88,7 @@ end
 
 
 mutable struct SparseLeftEnvironmentTensor <: AbstractLeftEnvironmentTensor
-    envt::Vector{LeftEnvironmentTensor}
+    A::Vector{LeftEnvironmentTensor}
     D::Int64
 
     function SparseLeftEnvironmentTensor(t::Vector{LeftEnvironmentTensor},D::Int64)
@@ -113,7 +113,7 @@ mutable struct SparseLeftEnvironmentTensor <: AbstractLeftEnvironmentTensor
 end
 
 mutable struct SparseRightEnvironmentTensor <: AbstractRightEnvironmentTensor
-    envt::Vector{RightEnvironmentTensor}
+    A::Vector{RightEnvironmentTensor}
     D::Int64
 
     function SparseRightEnvironmentTensor(t::Vector{RightEnvironmentTensor},D::Int64)

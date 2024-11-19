@@ -17,12 +17,12 @@ end
         for j in 1:N
             isnothing(O.H.ts[1].m[j,i]) && continue
             if isnothing(tmp)
-                tmp = contract(O.EnvL.envt[j], obj, O.H.ts[1].m[j,i])
+                tmp = contract(O.EnvL.A[j], obj, O.H.ts[1].m[j,i])
             else 
-                tmp += contract(O.EnvL.envt[j], obj, O.H.ts[1].m[j,i])
+                tmp += contract(O.EnvL.A[j], obj, O.H.ts[1].m[j,i])
             end
         end
-        ref += contract(tmp,O.EnvR.envt[i])
+        ref += contract(tmp,O.EnvR.A[i])
     end
 
     return MPSTensor(ref)
@@ -39,9 +39,9 @@ end =#
     for i in 1:M, j in 1:N
         isnothing(O.H.ts[1].m[j,i]) && continue
         if isnothing(tmp1[i])
-            tmp1[i] = contract(O.EnvL.envt[j], obj, O.H.ts[1].m[j,i])
+            tmp1[i] = contract(O.EnvL.A[j], obj, O.H.ts[1].m[j,i])
         else 
-            tmp1[i] += contract(O.EnvL.envt[j], obj, O.H.ts[1].m[j,i])
+            tmp1[i] += contract(O.EnvL.A[j], obj, O.H.ts[1].m[j,i])
         end
         @show i,space(tmp1[i].A)
     end
@@ -57,7 +57,7 @@ end =#
             @show i,j
             @show tmp1[j].A
             @show O.H.ts[2].m[j,i].A
-            @show O.EnvR.envt[i].A
+            @show O.EnvR.A[i].A
             if isnothing(tmp2)
                 tmp2 = contract(tmp1[j], O.H.ts[2].m[j,i])
             else 
@@ -65,7 +65,7 @@ end =#
             end
             @show space(tmp2.A)
         end
-        ref += contract(tmp2,O.EnvR.envt[i])
+        ref += contract(tmp2,O.EnvR.A[i])
     end
 
     return CompositeMPSTensor(ref)
@@ -77,8 +77,8 @@ function action1(O::SparseProjectiveHamiltonian{1},obj::MPSTensor{3})
 
     for i in 1:N, j in 1:M
         isnothing(O.H.ts[1].m[i,j]) && continue
-        tmp = contract(O.EnvL.envt[i], obj, O.H.ts[1].m[i,j])
-        ts += contract(tmp,O.EnvR.envt[j])
+        tmp = contract(O.EnvL.A[i], obj, O.H.ts[1].m[i,j])
+        ts += contract(tmp,O.EnvR.A[j])
     end
 
     return MPSTensor(ts)
@@ -93,9 +93,9 @@ function action2(O::SparseProjectiveHamiltonian{2},obj::CompositeMPSTensor{2,4})
 
     for i in 1:N, j in 1:M1, k in 1:R
         isnothing(O.H.ts[1].m[i,j]) | isnothing(O.H.ts[2].m[j,k]) && continue
-        tmp1 = contract(O.EnvL.envt[i], obj, O.H.ts[1].m[i,j])
+        tmp1 = contract(O.EnvL.A[i], obj, O.H.ts[1].m[i,j])
         tmp2 = contract(tmp1, O.H.ts[2].m[j,k])
-        ts += contract(tmp2,O.EnvR.envt[k])
+        ts += contract(tmp2,O.EnvR.A[k])
     end
 
     return CompositeMPSTensor(ts)

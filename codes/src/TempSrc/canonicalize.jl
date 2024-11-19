@@ -88,13 +88,13 @@ end
 
 function TensorKit.tsvd(A::CompositeMPOTensor{2,6}; direction::Symbol=:center, kwargs...)
     @assert direction in [:center,:left,:right]
-    U,S,V,ϵ = tsvd(A.A,(1,4,5),(2,3,6);kwargs...)
+    U,S,V,ϵ = tsvd(A.A,(2,3,6),(1,4,5);kwargs...)
     if direction == :center
-        return permute(U,(2,3),(1,4)),S,permute(V,(1,4),(2,3)),ϵ
+        return permute(U,(1,2),(4,3)),S,permute(V,(2,1),(3,4)),ϵ
     elseif direction == :left 
-        return permute(U*S,(2,3),(1,4)),permute(V,(1,4),(2,3)),ϵ
+        return permute(U*S,(1,2),(4,3)),permute(V,(2,1),(3,4)),ϵ
     elseif direction == :right 
-        return permute(U,(2,3),(1,4)),permute(S*V,(1,4),(2,3)),ϵ
+        return permute(U,(1,2),(4,3)),permute(S*V,(2,1),(3,4)),ϵ
     end
 end
 
@@ -114,6 +114,7 @@ function canonicalize!(obj::Union{DenseMPO{L},DenseMPS{L}},sl::Int64,sr::Int64) 
     end
 end
 
+function canonicalize!(::SparseMPO{4}, ::Int64) end
 
 function canonicalize!(obj::Union{DenseMPO{L},DenseMPS{L}},si::Int64) where {L}
     @assert 1 ≤ si ≤ L 
@@ -128,3 +129,4 @@ end
 function normalize!(obj::Union{AbstractMPOTensor,AbstractMPSTensor})
     obj.A = obj.A / norm(obj.A)
 end
+

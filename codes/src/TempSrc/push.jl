@@ -13,9 +13,9 @@ function pushleft(A::AbstractMPS, mpo::SparseMPO, B::AbstractMPS, EnvR::SparseRi
     for i in eachindex(tmpEnvR), j in 1:EnvR.D
         isnothing(mpo.ts[site].m[i,j]) && continue
         if isnothing(tmpEnvR[i])
-            tmpEnvR[i] = contract(A.ts[site], mpo.ts[site].m[i,j], B.ts[site], EnvR.envt[j])
+            tmpEnvR[i] = contract(A.ts[site], mpo.ts[site].m[i,j], B.ts[site], EnvR.A[j])
         else 
-            tmpEnvR[i] += contract(A.ts[site], mpo.ts[site].m[i,j], B.ts[site], EnvR.envt[j])
+            tmpEnvR[i] += contract(A.ts[site], mpo.ts[site].m[i,j], B.ts[site], EnvR.A[j])
         end
     end
     return SparseRightEnvironmentTensor(convert(Vector{RightEnvironmentTensor},tmpEnvR))
@@ -37,9 +37,9 @@ function pushright(A::AbstractMPS, mpo::SparseMPO, B::AbstractMPS, EnvL::SparseL
     for i in eachindex(tmpEnvL), j in 1:EnvL.D
         isnothing(mpo.ts[site].m[j,i]) && continue
         if isnothing(tmpEnvL[i])
-            tmpEnvL[i] = contract(A.ts[site], mpo.ts[site].m[j,i], B.ts[site],EnvL.envt[j])
+            tmpEnvL[i] = contract(A.ts[site], mpo.ts[site].m[j,i], B.ts[site],EnvL.A[j])
         else 
-            tmpEnvL[i] += contract(A.ts[site], mpo.ts[site].m[j,i], B.ts[site],EnvL.envt[j])
+            tmpEnvL[i] += contract(A.ts[site], mpo.ts[site].m[j,i], B.ts[site],EnvL.A[j])
         end
     end
 
@@ -62,40 +62,28 @@ function pushleft!(env::Environment{N}, tl::DenseMPOTensor{4}, tr::DenseMPOTenso
     pushleft!(env)
 end
 
-function pushleft(A::AbstractMPO, B::AbstractMPO, EnvR::DenseRightEnvironmentTensor{2}, site::Int64)
+function pushleft(A::DenseMPO, B::AdjointMPO, EnvR::DenseRightEnvironmentTensor{2}, site::Int64)
     return DenseRightEnvironmentTensor(contract(map(x -> x.ts[site],(A,B))..., EnvR.A))
 end
 
-function pushleft(A::AbstractMPO, B::AbstractMPO, C::AbstractMPO, EnvR::DenseRightEnvironmentTensor{3}, site::Int64)
+function pushleft(A::DenseMPO, B::DenseMPO, C::AdjointMPO, EnvR::DenseRightEnvironmentTensor{3}, site::Int64)
     return DenseRightEnvironmentTensor(contract(map(x -> x.ts[site],(A,B,C))..., EnvR.A))
 end
 
-function pushright(A::AbstractMPO, B::AbstractMPO, EnvL::DenseLeftEnvironmentTensor{2}, site::Int64)
+function pushright(A::DenseMPO, B::AdjointMPO, EnvL::DenseLeftEnvironmentTensor{2}, site::Int64)
     return DenseLeftEnvironmentTensor(contract(map(x -> x.ts[site],(A,B))..., EnvL.A))
 end
 
-function pushright(A::AbstractMPO, B::AbstractMPO, C::AbstractMPO, EnvL::DenseLeftEnvironmentTensor{3}, site::Int64)
+function pushright(A::DenseMPO, B::DenseMPO, C::AdjointMPO, EnvL::DenseLeftEnvironmentTensor{3}, site::Int64)
     return DenseLeftEnvironmentTensor(contract(map(x -> x.ts[site],(A,B,C))..., EnvL.A))
 end
 
-function contract(A::MPSTensor{3},mpot::DenseMPOTensor{2},B::AdjointMPSTensor{3},EnvR::RightEnvironmentTensor{2})
-    @tensor tmp[-1;-2] ≔ A.A[-1,4,1] * mpot.A[3,4] * B.A[2,-2,3] * EnvR.A[1,2]
-    return RightEnvironmentTensor(tmp)
+function pushleft(A::DenseMPO, B::SparseMPO, C::AdjointMPO, EnvR::SparseRightEnvironmentTensor, site::Int64)
+    return SparseRightEnvironmentTensor(contract(map(x -> x.ts[site],(A,B,C))..., EnvR))
 end
 
-function contract(A::MPSTensor{3},mpot::DenseMPOTensor{3},B::AdjointMPSTensor{3},EnvR::RightEnvironmentTensor{2})
-    @tensor tmp[-1 -2;-3] ≔ A.A[-1,4,1] * mpot.A[3,-2,4] * B.A[2,-3,3] * EnvR.A[1,2]
-    return RightEnvironmentTensor(tmp)
-end
-
-function contract(A::MPSTensor{3},mpot::DenseMPOTensor{2},B::AdjointMPSTensor{3},EnvR::RightEnvironmentTensor{3})
-    @tensor tmp[-1 -2 ; -3] ≔ A.A[-1,4,1] * mpot.A[3,4] * B.A[2,-3,3] * EnvR.A[1,-2,2]
-    return RightEnvironmentTensor(tmp)
-end
-
-function contract(A::MPSTensor{3},mpot::DenseMPOTensor{3},B::AdjointMPSTensor{3},EnvR::RightEnvironmentTensor{3})
-    @tensor tmp[-1;-2] ≔ A.A[-1,4,1] * mpot.A[3,5,4] * B.A[2,-2,3] * EnvR.A[1,5,2]
-    return RightEnvironmentTensor(tmp)
+function pushright(A::DenseMPO, B::SparseMPO, C::AdjointMPO, EnvL::SparseLeftEnvironmentTensor, site::Int64)
+    return SparseLeftEnvironmentTensor(contract(map(x -> x.ts[site],(A,B,C))..., EnvL))
 end
 
 # ==============
