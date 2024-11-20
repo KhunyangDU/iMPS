@@ -39,16 +39,22 @@ function TDVP2!(Env::Environment{3}, τ::Number, D::Int64, totaltruncerror::Numb
     temptruncerr = 0
     println(">>>>>> Right >>>>>>")
     for site in 1:L-1
+        #@show D,_getD(Env.layer[1].ts[site])
+        #@show 1
         tmp = evolve!(composite(Env.layer[1].ts[site:site+1]...), projright2(Env,site), τ, LanczosLevel)
         tl, tr, temptruncerr = tsvd(tmp; direction=:right,trunc = truncdim(D))
+        #@show _getD(tl)
         pushright!(Env, tl, tr, τ, LanczosLevel)
         totaltruncerror = max(totaltruncerror,temptruncerr)
     end
     evolve!(Env.layer[1].ts[L], proj1(Env,L), τ, LanczosLevel)
     println("<<<<<< Left <<<<<<")
     for site in L:-1:2
+        ##site == div(L,2) && break
+        #@show D
         tmp = evolve!(composite(Env.layer[1].ts[site-1:site]...), projleft2(Env,site), τ, LanczosLevel)
         tl, tr, temptruncerr = tsvd(tmp; direction=:left,trunc = truncdim(D))
+        #@show _getD(tr)
         pushleft!(Env, tl, tr, τ, LanczosLevel)
         totaltruncerror = max(totaltruncerror,temptruncerr)
     end

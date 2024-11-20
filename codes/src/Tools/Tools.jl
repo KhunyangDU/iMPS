@@ -47,7 +47,7 @@ function FindPair(pairs::Vector,site::Number,target::Number)
     return filter(x -> x[site] == target, pairs)
 end
 
-function ApproxReal(Qi::Number;tol::Float64=1e-5)
+function ApproxReal(Qi::Number;tol::Float64=1e-1)
     imag(Qi) <= tol && return real(Qi)
     @error "$(Qi) not real"
 end

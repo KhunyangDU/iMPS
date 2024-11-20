@@ -205,7 +205,7 @@ const n = let
     tmp
 end
 
-F⁺F = let 
+const F⁺F = let 
     AuxSpace = Rep[U₁](1 => 1)
     F⁺ = TensorMap(ones, PhySpace, AuxSpace ⊗ PhySpace )
     F = permute(F⁺', (2,1), (3,))
@@ -213,9 +213,13 @@ F⁺F = let
 end
 
 const FF⁺ = let 
-    AuxSpace = Rep[U₁](-1 => 1)
+#=     AuxSpace = Rep[U₁](-1 => 1)
     F = TensorMap(ones, PhySpace, AuxSpace ⊗ PhySpace)
-    F⁺ = permute(F', (2,1), (3,))
+    F⁺ = permute(F', (2,1), (3,)) =#
+    AuxSpace = Rep[U₁](1 => 1)
+    rev = isometry(AuxSpace, flip(AuxSpace))
+    @tensor F[-1; -2 -3] ≔ F⁺F[1]'[1,-1,-3] * rev'[-2,1]
+    @tensor F⁺[-1 -2; -3] ≔ F⁺F[2]'[-1,-3,1] * rev[1,-2]
     F, F⁺
 end
 

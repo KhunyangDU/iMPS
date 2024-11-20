@@ -11,8 +11,8 @@ Nsweep: times of variational calculation (sweep). Default is 2.
 """
 function mul!(C::DenseMPO, A::Union{DenseMPO,SparseMPO}, B::Union{DenseMPO,SparseMPO}, α::Number, β::Number; kwargs...)
     #D_MPO = get(kwargs, :D_MPO, maximum(vcat(map(size, filter(x -> typeof(x) <: DenseMPO.[A,B])[1].ts)...)))
-    D_MPO = get(kwargs, :D_MPO, maximum(vcat(collect.(map(size, filter(x -> typeof(x) <: DenseMPO, [A,B])[1].ts))...)))
-    Nsweep = get(kwargs, :D_MPO, 2)
+    D = get(kwargs, :D, maximum(vcat(collect.(map(size, filter(x -> typeof(x) <: DenseMPO, [A,B])[1].ts))...)))
+    Nsweep = get(kwargs, :Nsweep, 2)
 
     tmp = deepcopy(C)'
 #=     @time "Initialize A,B,C Environment" begin
@@ -31,14 +31,14 @@ function mul!(C::DenseMPO, A::Union{DenseMPO,SparseMPO}, B::Union{DenseMPO,Spars
         for site in 1:L-1
             tl, tr, temptruncerr = tsvd(let 
                 axpby!(α, β, map(z -> contract(z.envs[site], vcat(map(u -> z.layer[u].ts[site:site+1],1:length(z.layer)-1)...)..., z.envs[site+2]),[EnvAB,EnvC])...)
-            end; direction=:right,trunc = truncdim(D_MPO))
+            end; direction=:right,trunc = truncdim(D))
             map(z -> pushright!(z, tl, tr),[EnvAB,EnvC])
             totaltruncerror = max(totaltruncerror,temptruncerr)
         end
         for site in L:-1:2
             tl, tr, temptruncerr = tsvd(let 
                 axpby!(α, β,map(z -> contract(z.envs[site-1], vcat(map(u -> z.layer[u].ts[site-1:site],1:length(z.layer)-1)...)..., z.envs[site+1]),[EnvAB,EnvC])...)
-            end; direction=:left,trunc = truncdim(D_MPO))
+            end; direction=:left,trunc = truncdim(D))
             map(z -> pushleft!(z, tl, tr),[EnvAB,EnvC])
             totaltruncerror = max(totaltruncerror,temptruncerr)
         end
@@ -74,8 +74,8 @@ Nsweep: times of variational calculation (sweep). Default is 2.
 
 """
 function axpy!(α::Number, x::DenseMPO{L}, y::DenseMPO{L};kwargs...) where L
-    D_MPO = get(kwargs, :D_MPO, max(map(y -> maximum(vcat(collect.(map(size, y.ts))...)),[x,y])...))
-    Nsweep = get(kwargs, :D_MPO, 3)
+    D = get(kwargs, :D, max(map(y -> maximum(vcat(collect.(map(size, y.ts))...)),[x,y])...))
+    Nsweep = get(kwargs, :Nsweep, 3)
 
     tmp = deepcopy(y)'
 #=     @time "Initialize x,y Environment" begin
@@ -94,14 +94,14 @@ function axpy!(α::Number, x::DenseMPO{L}, y::DenseMPO{L};kwargs...) where L
         for site in 1:L-1
             tl, tr, temptruncerr = tsvd(let 
                 axpy!(α,map(z -> contract(z.envs[site], z.layer[1].ts[site:site+1]..., z.envs[site+2]),[Envx,Envy])...)
-            end; direction=:right,trunc = truncdim(D_MPO))
+            end; direction=:right,trunc = truncdim(D))
             map(z -> pushright!(z, tl, tr),[Envx,Envy])
             totaltruncerror = max(totaltruncerror,temptruncerr)
         end
         for site in L:-1:2
             tl, tr, temptruncerr = tsvd(let 
                 axpy!(α,map(z -> contract(z.envs[site-1], z.layer[1].ts[site-1:site]..., z.envs[site+1]),[Envx,Envy])...)
-            end; direction=:left,trunc = truncdim(D_MPO))
+            end; direction=:left,trunc = truncdim(D))
             map(z -> pushleft!(z, tl, tr),[Envx,Envy])
             totaltruncerror = max(totaltruncerror,temptruncerr)
         end

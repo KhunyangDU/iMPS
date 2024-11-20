@@ -139,9 +139,9 @@ function normalize!(obj::Union{DenseMPOTensor,MPSTensor})
     return tmp
 end
 
-function normalize!(obj::SparseCompositeMPOTensor{N,R}) where {N,R}
+#= function normalize!(obj::SparseCompositeMPOTensor{N,R}) where {N,R}
     @assert (center = obj.center[1]) == obj.center[2]
     tmp = norm(obj.A)
     obj.A[center] /= tmp
     return tmp
-end
+end =#

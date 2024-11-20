@@ -9,14 +9,12 @@ Latt = YCSqua(Lx,Ly)
 Ndop = 0
 
 ψ = let
-    AuxSpace = vcat(Rep[U₁×SU₂]((Ndop, 0) => 1), repeat([Rep[U₁×SU₂]((i, j) => 1 for i in -(abs(Ndop) + 1):(abs(Ndop)+1) for j in 0:1//2:1),], size(Latt) - 1))
-    randMPS(U₁SU₂Fermion.PhySpace, AuxSpace)
+    AuxSpace = vcat(Rep[U₁](Ndop // 2 => 1), repeat([Rep[U₁](i => 1 for i in -(abs(Ndop) + 1):1//2:(abs(Ndop)+1)),], size(Latt) - 1))
+    randMPS(U₁Fermion.PhySpace, AuxSpace)
 end
 
-t = 1
-U = 0
-
-H = Hamiltonian(Latt;U=U)
+μ = 0
+H = Hamiltonian(Latt;μ=μ)
 
 D = 2^6
 
@@ -25,7 +23,7 @@ showQuantSweep(lsE)
 
 @time "calculate observables" begin
     Obs = MPSObservable()
-    LocalSpace = U₁SU₂Fermion
+    LocalSpace = U₁Fermion
 
     for i in 1:size(Latt)
         addObs!(Obs,LocalSpace.n,i,"n",nothing)

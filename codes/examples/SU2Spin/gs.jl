@@ -3,8 +3,8 @@ using TensorKit
 include("../../src/iMPS.jl")
 include("model.jl")
 
-Lx = 4
-Ly = 4
+Lx = 8
+Ly = 1
 
 ψ = let 
     AuxSpace = vcat(Rep[SU₂](0 => 1),repeat([Rep[SU₂](i => 1 for i in 0:1//2:1),], Lx*Ly-1))

@@ -13,11 +13,10 @@ end
 Latt = YCSqua(Lx,Ly)
 
 μ = 0
-t = -1
-H = Hamiltonian(Latt, t,μ)
+H = Hamiltonian(Latt;μ=μ)
 D = 2^4
 
-ψ, lsE = DMRG2!(ψ,H,D)
+ψ, lsE = DMRG2!(ψ,H,D;LanczosLevel = 30)
 showQuantSweep(lsE)
 
 @time "calculate observables" begin
@@ -34,5 +33,6 @@ showQuantSweep(lsE)
 
     calObs!(Obs,ψ)
 end
+@show sum([Obs.values["n"][(i,)] for i in 1:size(Latt)])
 
 Obs.values

@@ -1,4 +1,4 @@
-include("../../../src/iMPS.jl")
+include("../../../../src/iMPS.jl")
 include("../model.jl")
 
 
@@ -14,7 +14,7 @@ D_MPO = 20
 LanczosLevel = 15
 
 Latt = YCSqua(Lx,Ly)
-@save "examples/Spinless Fermion/data/finite temp/lsμ_$(Lx)x$(Ly)_D_MPO=$(D_MPO)_t=$(t).jld2" lsμ
+@save "examples/deprecate/Spinless Fermion/data/finite temp/lsμ_$(Lx)x$(Ly)_D_MPO=$(D_MPO)_t=$(t).jld2" lsμ
 L = size(Latt)
 for μ in [2.0]
 
@@ -25,8 +25,8 @@ for μ in [2.0]
     ρ = SETTN(H,β₀,5,D_MPO)
 
     lsρ = sweepTanTRG2(ρ,H,lsβ,D_MPO,LanczosLevel)
-    @save "examples/Spinless Fermion/data/finite temp/lsβ_$(Lx)x$(Ly)_D_MPO=$(D_MPO)_t=$(t)_μ=$(μ).jld2" lsβ
-    @save "examples/Spinless Fermion/data/finite temp/lsρ_$(Lx)x$(Ly)_D_MPO=$(D_MPO)_t=$(t)_μ=$(μ).jld2" lsρ
+    @save "examples/deprecate/Spinless Fermion/data/finite temp/lsβ_$(Lx)x$(Ly)_D_MPO=$(D_MPO)_t=$(t)_μ=$(μ).jld2" lsβ
+    @save "examples/deprecate/Spinless Fermion/data/finite temp/lsρ_$(Lx)x$(Ly)_D_MPO=$(D_MPO)_t=$(t)_μ=$(μ).jld2" lsρ
     lsObsDict = Vector{Dict}(undef,length(lsβ))
     for (i,tempρ) in enumerate(lsρ)
 
@@ -43,7 +43,7 @@ for μ in [2.0]
 
     end
     
-    @save "examples/Spinless Fermion/data/lsObsDict_$(Lx)x$(Ly)_D_MPO=$(D_MPO)_t=$(t)_μ=$(μ).jld2" lsObsDict
+    @save "examples/deprecate/Spinless Fermion/data/lsObsDict_$(Lx)x$(Ly)_D_MPO=$(D_MPO)_t=$(t)_μ=$(μ).jld2" lsObsDict
 
 
 end

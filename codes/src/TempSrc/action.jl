@@ -89,26 +89,28 @@ function action(O::SparseProjectiveHamiltonian{1}, obj::Union{MPSTensor{3},Dense
     return ts
 end
 
-function action(O::SparseProjectiveHamiltonian{2}, obj::Union{CompositeMPSTensor{2,4}, CompositeMPOTensor{2, 6}, SparseCompositeMPOTensor{2, 4}, DenseMPO})
+function action(O::SparseProjectiveHamiltonian{2}, obj::Union{CompositeMPSTensor{2,4}, CompositeMPOTensor{2, 6}};svd::Bool = false)
     N,M1 = O.H.D[1]
     M2,R = O.H.D[2]
     @assert M1 == M2
 
     ts = nothing
-
+    #@show _getD(obj), N*M1*R
     for i in 1:N, j in 1:M1, k in 1:R
         isnothing(O.H.ts[1].m[i,j]) | isnothing(O.H.ts[2].m[j,k]) && continue
-#=         if isnothing(ts)
-            ts = contract(O.EnvL.A[i], obj, O.H.ts[1].m[i,j], O.H.ts[2].m[j,k], O.EnvR.A[k])
+        if svd
+            tl,tr,ϵ = tsvd(obj;direction = :left,trunc = truncdim(round(Int64,2^mean(map(x -> log(2,_getD(x)),[O.EnvL,O.EnvR])))))
+            if isnothing(ts)
+                ts = contract(O.EnvL.A[i], tl, tr, O.H.ts[1].m[i,j], O.H.ts[2].m[j,k], O.EnvR.A[k])
+            else
+                ts += contract(O.EnvL.A[i], tl, tr, O.H.ts[1].m[i,j], O.H.ts[2].m[j,k], O.EnvR.A[k])
+            end
         else
-            axpy!(1,contract(O.EnvL.A[i], obj, O.H.ts[1].m[i,j], O.H.ts[2].m[j,k], O.EnvR.A[k]),ts)
-        end =#
-        tmp1 = contract(O.EnvL.A[i], obj, O.H.ts[1].m[i,j])
-        tmp2 = contract(tmp1, O.H.ts[2].m[j,k])
-        if isnothing(ts)
-            ts = contract(tmp2, O.EnvR.A[k])
-        else
-            ts += contract(tmp2, O.EnvR.A[k])
+            if isnothing(ts)
+                ts = contract(contract(contract(O.EnvL.A[i], obj, O.H.ts[1].m[i,j]), O.H.ts[2].m[j,k]), O.EnvR.A[k])
+            else
+                ts += contract(contract(contract(O.EnvL.A[i], obj, O.H.ts[1].m[i,j]), O.H.ts[2].m[j,k]), O.EnvR.A[k])
+            end
         end
     end
 

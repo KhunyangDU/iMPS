@@ -55,6 +55,10 @@ mutable struct RightCompositeEnvironmentTensor{N,R} <: AbstractEnvironmentTensor
     function RightCompositeEnvironmentTensor(t::AbstractTensorMap)
         return new{length(domain(t)),rank(t)}(t)
     end
+
+#=     function RightCompositeEnvironmentTensor(t::AbstractTensorMap,order::Int64)
+        return new{order,rank(t)}(t)
+    end =#
 end
 
 function Base.:+(A::LeftCompositeEnvironmentTensor,

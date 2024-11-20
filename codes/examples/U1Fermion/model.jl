@@ -1,7 +1,7 @@
-function Hamiltonian(Latt::AbstractLattice;t::Number=1,μ::Number=0)
+function Hamiltonian(Latt::AbstractLattice; t::Number = 1, μ::Number = 0)
     H = let 
         Root = InteractionTreeNode()
-        LocalSpace = TrivialSpinlessFermion
+        LocalSpace = U₁Fermion
     
         for i in 1:size(Latt)
             addIntr!(Root,LocalSpace.n,i,"n",-μ,nothing)
@@ -14,6 +14,5 @@ function Hamiltonian(Latt::AbstractLattice;t::Number=1,μ::Number=0)
     
         AutomataSparseMPO(InteractionTree(Root),size(Latt))
     end
-
     return H
 end
