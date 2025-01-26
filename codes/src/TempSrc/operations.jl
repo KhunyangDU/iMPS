@@ -14,6 +14,9 @@ function mul!(C::DenseMPO, A::Union{DenseMPO,SparseMPO}, B::Union{DenseMPO,Spars
     D = get(kwargs, :D, maximum(vcat(collect.(map(size, filter(x -> typeof(x) <: DenseMPO, [A,B])[1].ts))...)))
     Nsweep = get(kwargs, :Nsweep, 2)
 
+    @assert length(A) == length(B)
+    L = length(A)
+
     tmp = deepcopy(C)'
 #=     @time "Initialize A,B,C Environment" begin
         EnvAB = Environment([deepcopy(A),deepcopy(B),tmp])
@@ -155,8 +158,15 @@ function tr(ρ::DenseMPO)
     return _scalar(Env)
 end
 
-function _scalar(Env::Environment{2})
-    @assert (site = Env.center[1]) == Env.center[2]
-    return contract(Env.envs[site],map(x -> Env.layer[x].ts[site], 1:2)...,Env.envs[site+1])
+function tr(ρ::DenseMPO, Opr::SparseMPO)
+    Env = Environment([deepcopy(ρ), Opr, ρ'])
+    initialize!(Env)
+    return _scalar(Env)
 end
 
+function _scalar(Env::Environment{N}) where N
+    @assert (site = Env.center[1]) == Env.center[2]
+    t1 = map(x -> Env.layer[x].ts[site], 1:length(Env.layer))
+    tmp = contract(Env.envs[site],t1...,Env.envs[site+1])
+    return tmp
+end

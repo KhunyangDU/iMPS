@@ -17,3 +17,19 @@ function Hamiltonian(Latt::AbstractLattice;t::Number=1,μ::Number=0)
 
     return H
 end
+
+function ϵ(k)
+    return -2cos(k)
+end
+
+function fe(β,L)
+    lsk = range(-pi,pi,L)
+    return - sum(@. log(1+exp(-β*(ϵ(lsk))))) / β / L
+end
+
+function ce(β,L)
+    lsk = range(-pi,pi,L)
+    return β^2/2/L * sum(@. ϵ(lsk)^2/(1 + cosh(β * ϵ(lsk))))
+end
+
+

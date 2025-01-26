@@ -1,6 +1,6 @@
 function SETTN!(β::Number, H::SparseMPO{L}, ρ::DenseMPO;kwargs...) where L
     
-    max_order = get(kwargs,:max_order,4)
+    max_order = get(kwargs,:max_order,6)
     D = get(kwargs,:D,maximum(vcat(collect.(H.D)...)))
     F_tol = get(kwargs,:F_tol,1e-8)
     F = zeros(max_order)
@@ -15,7 +15,7 @@ function SETTN!(β::Number, H::SparseMPO{L}, ρ::DenseMPO;kwargs...) where L
         i ≠ 1 && (dF = abs((F[i] - F[i-1]) / F[i]))
 
         if dF < F_tol
-           println("SETTN converged at $(i)th order with dF = $(dF)") 
+           println("SETTN converged at $(i)th order with dF = $(dF)")
            break
         end
 

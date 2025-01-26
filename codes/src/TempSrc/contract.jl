@@ -332,3 +332,21 @@ function contract(EnvL::LeftCompositeEnvironmentTensor{2, 4}, EnvR::RightComposi
     @tensor tmp[-1 -2 -3;-4] ≔ EnvL.A[-1,-2,2,1] * EnvR.A[1,2,-3,-4]
     return CompositeMPSTensor(tmp)
 end
+
+function contract(EnvL::SparseLeftEnvironmentTensor, A::DenseMPOTensor{4}, B::SparseMPOTensor{N,M}, C::Union{DenseMPOTensor{4},AdjointMPOTensor{4}}, EnvR::SparseRightEnvironmentTensor) where {N,M}
+    tmp = nothing
+    for i in N, j in M
+        isnothing(B.m[i,j]) && continue
+        tmp1 = contract(EnvL.A[i], A, B.m[i,j], C, EnvR.A[j])
+        if isnothing(tmp)
+            tmp = tmp1
+        else
+            tmp += tmp1
+        end
+    end
+    return tmp
+end
+
+function contract(EnvL::LeftEnvironmentTensor{2}, A::DenseMPOTensor{4}, B::DenseMPOTensor{2}, C::AdjointMPOTensor{4}, EnvR::RightEnvironmentTensor{2})
+    return @tensor EnvL.A[3,1] * A.A[2,1,6,5] * B.A[4,2] * C.A[7,5,4,3] * EnvR.A[6,7]
+end

@@ -36,3 +36,4 @@ end
 @show sum([Obs.values["n"][(i,)] for i in 1:size(Latt)])
 
 Obs.values
+
