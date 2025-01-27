@@ -6,6 +6,12 @@ function easyinterp10(v,N=100)
     return 10. .^ (range(log10.(extrema(v))..., N))
 end
 
+function ue(β,L)
+    lsk = @. (1:L) / (L+1) * pi
+    lsum = @. - ϵ(lsk) / (1 + exp(-β * ϵ(lsk)))
+    return sum(lsum) / L
+end
+
 #= 
 0126：
 code
@@ -64,11 +70,12 @@ lines!(axf, 1 ./ cβ, fe.(cβ,L);color = :red)
 
 axu = Axis(fig[2,1];xscale=log10,figsize...)
 scatter!(axu, 1 ./ lsβ, u)
-#lines!(axu, 1 ./ lsβ, fe.(lsβ,L);color = :red)
+lines!(axu, 1 ./ cβ, ue.(cβ,L);color = :red)
 
 axce = Axis(fig[3,1];xscale=log10,figsize...)
 scatter!(axce, lsT1, Ce)
 lines!(axce, 1 ./ cβ, ce.(cβ,L);color = :red)
+#scatter!(axce, centralize(1 ./ cβ), - centralize(cβ) .^ 2 .* diff(ue.(cβ,L)) ./ diff(cβ))
 
 resize_to_layout!(fig)
 display(fig)

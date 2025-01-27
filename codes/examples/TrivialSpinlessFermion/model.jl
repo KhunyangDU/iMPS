@@ -23,12 +23,12 @@ function ϵ(k)
 end
 
 function fe(β,L)
-    lsk = range(-pi,pi,L)
+    lsk = @. (1:L) / (L+1) * pi
     return - sum(@. log(1+exp(-β*(ϵ(lsk))))) / β / L
 end
 
 function ce(β,L)
-    lsk = range(-pi,pi,L)
+    lsk = @. (1:L) / (L+1) * pi
     return β^2/2/L * sum(@. ϵ(lsk)^2/(1 + cosh(β * ϵ(lsk))))
 end
 
